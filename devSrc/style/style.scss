@@ -2,6 +2,8 @@
     width: 100%;
     height: 100%;
     position: fixed;
+    padding: 0px;
+    border: none;
     left: 0px;
     top: 0px;
     z-index: 999999999;
@@ -80,7 +82,6 @@
         .dialog{
             width: 360px;
             min-height: 616px;
-            max-height: 620px;
             background: #FFF;
             box-shadow: rgba(0, 0, 0, 0.137255) 0px 24px 38px 3px, rgba(0, 0, 0, 0.117647) 0px 9px 46px 8px, rgba(0, 0, 0, 0.2) 0px 11px 15px -7px;
             border-radius: 2px;
@@ -100,14 +101,13 @@
         }
         .feedback-area{
             width: 100%;
-            height: 196px;
-            padding: 18px 0px 0px 0px;
+            padding: 0px 0px 0px 0px;
             position: relative;
             textarea{
-                padding: 0px 16px 0px 18px;
+                padding: 18px 16px 12px 18px;
                 display: block;
                 width: 100%;
-                height: 100%;
+                height: 186px;
                 resize: none;
                 outline: none;
                 border: none;
@@ -169,6 +169,264 @@
             label{
                 color: #000;
                 font-size: 14px;
+            }
+        }
+        .screenshot-area{
+            width: 100%;
+            height: 192px;
+            background: #EEE;
+            position: relative;
+            .loading {
+                .loading-icon{
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    margin-left: -20px;
+                    margin-top: -20px;
+                    width: 40px;
+                    height: 40px;
+                    animation: feedbackLoading 10s linear 0ms infinite;
+                    circle{
+                        animation: feedbackLoadingCircle 2000ms ease-in-out 0ms infinite;
+                    }
+                }
+                .loading-text{
+                    text-align: center;
+                    color: #999;
+                    font-size: 14px;
+                    position: absolute;
+                    display: block;
+                    width: 100%;
+                    height: 24px;
+                    line-height: 24px;
+                    top: 70%;
+                    left: 0px;
+                }
+            }
+            .screenshot{
+                width: 100%;
+                height: 100%;
+                display: flex;
+                position: relative;
+                cursor: pointer;
+                &:hover{
+                    .to-edit{
+                        opacity: 1;
+                    }
+                }
+                .to-edit{
+                    width: 224px;
+                    height: 112px;
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    margin-left: -112px;
+                    margin-top: -56px;
+                    padding: 16px;
+                    border-radius: 6px;
+                    transition: all 250ms ease;
+                    opacity: 0;
+                    background: rgba(255,255,255,.75);
+                    &:hover{
+                        svg{
+                            fill: #3986FF;
+                        }
+                        .edit-label{
+                            color: #3986FF;
+                        }
+                    }
+                    .edit-icon{
+                        width: 48px;
+                        height: 48px;
+                        margin: 0px auto;
+                    }
+                    .edit-label{
+                        width: 100%;
+                        text-align: center;
+                        display: block;
+                        color: #757575;
+                        margin-top: 12px;
+                        font-size: 14px;
+                    }
+                }
+                img{
+                    max-height: 100%;
+                    max-width: 100%;
+                    margin: auto;
+                }
+            }
+        }
+        .legal{
+            width: 100%;
+            color: #757575;
+            font-size: 12px;
+            padding: 12px 16px;
+            line-height: 1.5;
+            background: #FAFAFA;
+            a{
+                color: #3986FF;
+                font-size: 12px;
+            }
+        }
+        .actions{
+            width: 100%;
+            padding: 0px 6px;
+            height: 56px;
+            border-top: solid 1px #E0E0E0;
+            display: flex;
+            justify-content: flex-end;
+            .flatbutton{
+                margin-top: 10px;
+                padding: 0px 16px;
+                font-size: 14px;
+                height: 36px;
+                line-height: 36px;
+                border-radius: 3px;
+                color: #333;
+                transition: all 400ms ease;
+                cursor: pointer;
+                user-select: none;
+                &:hover{
+                    background: #EEE;
+                }
+            }
+            .confirm{
+                margin-right: 8px;
+            }
+            .cancel{
+            }
+        }
+        .tool-bar{
+            position: fixed;
+            left: 50%;
+            top: 60%;
+            margin-left: -115px;
+            width: 288px;
+            background: #FFF;
+            height: 56px;
+            border-radius: 2px;
+            box-shadow: rgba(0, 0, 0, 0.137255) 0px 24px 38px 3px, rgba(0, 0, 0, 0.117647) 0px 9px 46px 8px, rgba(0, 0, 0, 0.2) 0px 11px 15px -7px;
+            z-index: 999999999;
+            .move{
+                float: left;
+                width: 40px;
+                height: 56px;
+                padding: 0px 12px;
+                cursor: move;
+            }
+            .tool{
+                float: left;
+                width: 56px;
+                height: 56px;
+                padding: 10px;
+                cursor: pointer;
+                position: relative;
+                user-select: none;
+                &:hover{
+                    background: #F0F0F0;
+                }
+            }
+            .hight-light{
+                &:hover{
+                    &:before{
+                        display: block;
+                    }
+                }
+                &:before{
+                    content: '高亮问题区域';
+                    display: none;
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    background: #676767;
+                    border-radius: 3px;
+                    color: #FFF;
+                    position: absolute;
+                    left: 50%;
+                    bottom: -35px;
+                    transform: translateX(-50%);
+                    text-align: center;
+                    width: 80px;
+                }
+            }
+            .hide{
+                &:hover{
+                    &:before{
+                        display: block;
+                    }
+                }
+                &:before{
+                    display: none;
+                    content: '隐藏敏感信息';
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    background: #676767;
+                    color: #FFF;
+                    border-radius: 3px;
+                    position: absolute;
+                    left: 50%;
+                    bottom: -35px;
+                    transform: translateX(-50%);
+                    text-align: center;
+                    width: 80px;
+                }
+            }
+            .text{
+                span{
+                    color: #333;
+                    line-height: 36px;
+                    text-align: center;
+                    font-size: 32px;
+                }
+                &:hover{
+                    &:before{
+                        display: block;
+                    }
+                }
+                &:before{
+                    display: none;
+                    content: '添加描述文字';
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    background: #676767;
+                    color: #FFF;
+                    border-radius: 3px;
+                    position: absolute;
+                    left: 50%;
+                    bottom: -35px;
+                    transform: translateX(-50%);
+                    text-align: center;
+                    width: 80px;
+                }
+            }
+            .tool-active{
+                background: #E0E0E0;
+                &:hover{
+                    background: #E0E0E0;
+                }
+            }
+            .button{
+                float: right;
+                height: 56px;
+                cursor: pointer;
+                margin-right: 10px;
+                background: #FFF;
+                .flatbutton{
+                    display: block;
+                    height: 36px;
+                    line-height: 36px;
+                    border-radius: 3px;
+                    padding: 0px 8px;
+                    float: right;
+                    color: #3986FF;
+                    font-size: 14px;
+                    text-align: center;
+                    min-width: 64px;
+                    margin-top: 10px;
+                    background: #FFF;
+                    &:hover{
+                        background: #EEE;
+                    }
+                }
             }
         }
     }
