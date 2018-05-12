@@ -1,6 +1,6 @@
 import React from 'react';
 import html2canvas from 'html2canvas';
-import $ from 'zepto';
+import $ from 'n-zepto';
 
 const funcs = {
     browserType: () => {
@@ -221,6 +221,14 @@ export default class Window extends React.Component {
         }
     }
 
+    switchCanvasVisible(visible) {
+        if(visible) {
+            this.ref.canvas.removeAttribute('data-html2canvas-ignore');
+        }else {
+            this.ref.canvas.setAttribute('data-html2canvas-ignore', 'true');
+        }
+    }
+
     componentDidMount() {
         this.initCanvas();
     }
@@ -296,7 +304,6 @@ export default class Window extends React.Component {
         this.move = true;
         this.eX = e.clientX + window.scrollX;
         this.eY = e.clientY + window.scrollY;
-        console.log(this.eX, this.eY)
     }
 
     handleMoveMouseUp(e) {
@@ -322,10 +329,10 @@ export default class Window extends React.Component {
 
     isVisible(el) {
         let visible = true;
-        if (el.style.display == 'none') {
+        if ($(el).css('display') == 'none') {
             visible = false;
         }
-        if (el.style.visibility == 'hidden') {
+        if ($(el).css('visibility') == 'hidden') {
             visible = false;
         }
         return visible;
@@ -421,8 +428,6 @@ export default class Window extends React.Component {
                 // console.log(right)
                 // console.log(top)
                 // console.log(bottom)
-                let iw = iframe.offsetWidth;
-                let ih = iframe.offsetHeight;
                 let doc;
                 let isCors = false;
                 try {
@@ -431,7 +436,6 @@ export default class Window extends React.Component {
                     isCors = true;
                 }
                 if (!isCors) {
-                    let idw = iframe.contentWindow.document.body.offsetWidth;
                     let shoted = iframe.getAttribute('data-shoted');
                     if (shoted == 'yes') {
                         presolve();
@@ -453,30 +457,10 @@ export default class Window extends React.Component {
                         }
                     });
                     Promise.all([imgPromise, iframePromise]).then(() => {
-                        //如果body里面没有元素截图会失败;所以检测到没有元素的时候加一个临时元素
-                        let hasDOM = true;
-                        if (!doc.innerHTML) {
-                            hasDOM = false;
-                            $(doc).append('<div class="temp-div"></div>');
-                        }
-                        html2canvas(doc).then((canvas) => {
-                            if (!hasDOM) {
-                                $(doc).find('.temp-div').remove();
-                            }
-                            $(iframe).hide();
-                            $(iframe).attr('data-shoted', 'yes');
-                            $(iframe).after('<div class="iframe_tmp" style="width: ' + iw + 'px;height:' + ih + 'px;overflow: hidden;display:' + displayType + ';position: ' + position + '; margin: ' + margin + ';padding: ' + padding + ';box-sizing: ' + boxSizing + ';left: ' + left + ';right: ' + right + ';top:' + top + ';bottom: ' + bottom + ';"><img src="' + canvas.toDataURL('image/png') + '" width="' + idw + '" height="' + 'auto' + '"/></div>');
-                            presolve();
-                        }).catch((e) => {
-                            presolve();
-                            console.log(e)
-                        });
+                        presolve();
                     });
-                } else {
-                    //如果是跨域iframe暂时不处理留白;
-                    $(iframe).hide();
-                    $(iframe).after('<div class="iframe_tmp" style="border: solid 1px #2e2e2e; width: ' + iw + 'px;height:' + ih + 'px;overflow: hidden;display:' + displayType + ';position: ' + position + '; margin: ' + margin + ';padding: ' + padding + ';box-sizing: ' + boxSizing + ';left: ' + left + ';right: ' + right + ';top:' + top + ';bottom: ' + bottom + ';"></div>');
-                    presolve();
+                }else {
+                    resolve();
                 }
             }))
         };
@@ -498,9 +482,18 @@ export default class Window extends React.Component {
             this.handleCorsImg(document.body, resolve, reject);
         });
 
-        imgPromise.then(() => {
-            html2canvas(document.body).then((canvas) => {
-                this.refs.screenshotPrev.src = canvas.toDataURL('image/png');
+        let iframePromsie = new Promise((resolve, reject) => {
+            this.handleIframe(document.body, resolve, reject);
+        });
+        Promise.all([imgPromise, iframePromsie]).then(() => {
+            html2canvas(document.body, {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                x: $(document.body).scrollLeft(),
+                y: $(document.body).scrollTop(),
+            }).then((canvas) => {
+                let src = canvas.toDataURL('image/png');
+                this.refs.screenshotPrev.src = src;
                 this.refs.screenshotPrev.onload = () => {
                     this.setState({
                         screenshotEdit: true,
@@ -532,7 +525,7 @@ export default class Window extends React.Component {
                                     state.textError ?
                                         <div className="required-tip">请输入问题描述</div> : null
                                 }
-                                <textarea placeholder="描述你的问题或分享你的意见" ref="textarea" defaultValue={state.text}
+                                <textarea placeholder="请说明您的问题或分享您的想法" ref="textarea" defaultValue={state.text}
                                           onChange={(e) => {
                                               this.setState({
                                                   text: e.target.value,
@@ -598,6 +591,19 @@ export default class Window extends React.Component {
                                     Google。我们将根据自己的<a href="">隐私权政策</a>和<a href="">服务条款</a>使用您提供的信息帮助解决技术问题和改进我们的服务。
                                 </div>
                                 <div className="actions">
+                                    <div className="flatbutton cancel" style={{color: '#757575'}} onClick={() => {
+                                        {/*this.reset();*/
+                                        }
+                                        {/*this.setState({*/
+                                        }
+                                        {/*text: '',*/
+                                        }
+                                        {/*});*/
+                                        }
+                                        {/*this.props.onRequestCancel();*/
+                                        }
+                                    }}>取消
+                                    </div>
                                     <div className="flatbutton confirm"
                                          style={{color: this.props.themeColor || '#3986FF'}}
                                          onClick={() => {
@@ -621,19 +627,6 @@ export default class Window extends React.Component {
                                              }
                                          }}
                                     >发送
-                                    </div>
-                                    <div className="flatbutton cancel" style={{color: '#757575'}} onClick={() => {
-                                        {/*this.reset();*/
-                                        }
-                                        {/*this.setState({*/
-                                        }
-                                        {/*text: '',*/
-                                        }
-                                        {/*});*/
-                                        }
-                                        {/*this.props.onRequestCancel();*/
-                                        }
-                                    }}>取消
                                     </div>
                                 </div>
                             </div>
@@ -695,7 +688,7 @@ export default class Window extends React.Component {
                             </div>
                         </div>
                 }
-                <canvas ref="canvas" id="feedbackCanvas"></canvas>
+                <canvas ref="canvas" id="feedbackCanvas" data-html2canvas-ignore="true"></canvas>
             </div>
         )
     }

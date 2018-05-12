@@ -15,6 +15,9 @@ router.all('*', (req, res, next) => {
 router.get('/test', (req, res) => {
     res.render('index.html');
 });
+router.get('/iframe', (req, res) => {
+    res.render('iframe.html');
+});
 router.post('/feedbackApi/cors', (req, res) => {
     let args = req.body;
     let url = args.url;
