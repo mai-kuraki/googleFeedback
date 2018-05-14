@@ -159,6 +159,11 @@ const fbCrossOrigin = [];
 
 const host = 'http://127.0.0.1:5000';
 
+const hightLightEl = ['button', 'a', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'p',
+    'i', 'strong', 'small', 'sub', 'sup', 'b', 'time', 'img',
+    'caption', 'input', 'label', 'legend', 'select', 'textarea',
+    'details', 'summary'];
+
 export default class Window extends React.Component {
     constructor() {
         super();
@@ -197,7 +202,10 @@ export default class Window extends React.Component {
             shotOpen: false,
             loading: false,
             screenshotEdit: false,
-            editMode: false,
+            editMode: true,
+            toolBarType: 'hightlight',
+            hightlightItem: [],
+            blackItem: [],
         };
         this.move = false;
         this.eX = 0;
@@ -222,15 +230,75 @@ export default class Window extends React.Component {
     }
 
     switchCanvasVisible(visible) {
-        if(visible) {
+        if (visible) {
             this.ref.canvas.removeAttribute('data-html2canvas-ignore');
-        }else {
+        } else {
             this.ref.canvas.setAttribute('data-html2canvas-ignore', 'true');
         }
     }
 
+    inElement(e) {
+        let x = e.clientX,
+            y = e.clientY;
+        let el = document.elementsFromPoint(x, y)[3];
+        this.refs.canvas.style.cursor = 'crosshair';
+        if(el && hightLightEl.indexOf(el.nodeName.toLocaleLowerCase()) > -1) {
+            let rect = el.getBoundingClientRect();
+            let rectInfo = {
+                sx: rect.left + document.documentElement.scrollLeft - 3,
+                sy: rect.top + document.documentElement.scrollTop - 3,
+                width: rect.width + 6,
+                height: rect.height + 6
+            };
+            return rectInfo;
+        }else {
+            return false;
+        }
+    }
+
+    elementHelper(e) {
+        let rectInfo = this.inElement(e);
+        if(rectInfo) {
+            this.refs.canvas.style.cursor = 'pointer';
+            this.drawElementHelper(rectInfo);
+        }else {
+            if(this.hasDrawHelper) {
+                this.initCanvas();
+                this.hasDrawHelper = false;
+            }
+        }
+    }
+
+    elementHelperClick(e) {
+        let rectInfo = this.inElement(e);
+        if(rectInfo) {
+            let hightlightItem = this.state.hightlightItem;
+            hightlightItem.push(rectInfo);
+            this.setState({
+                hightlightItem: hightlightItem,
+            })
+        }
+    }
+
+    drawElementHelper(info) {
+        this.initCanvas();
+        this.hasDrawHelper = true;
+        this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
+        this.ctx.lineWidth = '3';
+        this.ctx.strokeStyle = '#FEEA4E';
+        this.ctx.rect(info.sx, info.sy, info.width, info.height);
+        this.ctx.stroke();
+    }
+
+    addEventListener() {
+        document.addEventListener('mousemove', this.elementHelper.bind(this));
+        document.addEventListener('click', this.elementHelperClick.bind(this));
+    }
+
     componentDidMount() {
         this.initCanvas();
+        this.addEventListener();
+        this.toEditMode();
     }
 
     getDevice() {
@@ -253,14 +321,14 @@ export default class Window extends React.Component {
         if (!this.ctx) {
             this.ctx = canvas.getContext('2d');
         }
-        let windowWidth = window.innerWidth,
-            windowHeight = window.innerHeight;
-        canvas.width = windowWidth;
-        canvas.height = windowHeight;
-        canvas.style.width = windowWidth;
-        canvas.style.height = windowHeight;
+        let docWidth = document.body.clientWidth,
+            docHeight = document.body.clientHeight;
+        canvas.width = docWidth;
+        canvas.height = docHeight;
+        canvas.style.width = docWidth;
+        canvas.style.height = docHeight;
         this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        this.ctx.fillRect(0, 0, windowWidth, windowHeight);
+        this.ctx.fillRect(0, 0, docWidth, docHeight);
     }
 
     loadingState(state) {
@@ -459,11 +527,12 @@ export default class Window extends React.Component {
                     Promise.all([imgPromise, iframePromise]).then(() => {
                         presolve();
                     });
-                }else {
+                } else {
                     resolve();
                 }
             }))
-        };
+        }
+        ;
         if (pItem.length > 0) {
             Promise.all(pItem).then(() => {
                 resolve();
@@ -514,7 +583,6 @@ export default class Window extends React.Component {
         return (
             <div className="feedback-window" onMouseMove={this.handleMouseMove.bind(this)}
                  onMouseUp={this.handleMoveMouseUp.bind(this)}>
-                <div className="dialog-mask"></div>
                 {
                     !state.editMode ?
                         <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true">
@@ -592,39 +660,11 @@ export default class Window extends React.Component {
                                 </div>
                                 <div className="actions">
                                     <div className="flatbutton cancel" style={{color: '#757575'}} onClick={() => {
-                                        {/*this.reset();*/
-                                        }
-                                        {/*this.setState({*/
-                                        }
-                                        {/*text: '',*/
-                                        }
-                                        {/*});*/
-                                        }
-                                        {/*this.props.onRequestCancel();*/
-                                        }
                                     }}>取消
                                     </div>
                                     <div className="flatbutton confirm"
                                          style={{color: this.props.themeColor || '#3986FF'}}
                                          onClick={() => {
-                                             {/*this.getSysInfo();*/
-                                             }
-                                             {/*let text = this.state.text;*/
-                                             }
-                                             {/*let src = $('#screenshotPrev').attr('src') || '';*/
-                                             }
-                                             {/*setTimeout(() => {*/
-                                             }
-                                             {/*this.setState({*/
-                                             }
-                                             {/*text: '',*/
-                                             }
-                                             {/*});*/
-                                             }
-                                             {/*this.props.onRequestConfirm(text, this.state.sysInfo, src);*/
-                                             }
-                                             {/*});*/
-                                             }
                                          }}
                                     >发送
                                     </div>
@@ -646,48 +686,62 @@ export default class Window extends React.Component {
                                 </svg>
                             </div>
                             <div
-                                className={`tool ${(this.state.editMode == 'hightlight') ? 'tool-active' : ''} hight-light`}
+                                className={`tool ${(this.state.toolBarType == 'hightlight') ? 'tool-active' : ''} hight-light`}
                                 onClick={() => {
                                     this.setState({
-                                        editMode: 'hightlight',
+                                        toolBarType: 'hightlight',
                                     })
                                 }}
                             ><span
                                 style={{display: 'inline-block', position: 'relative', height: '36px', width: '36px'}}><svg
                                 focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36"
-                                fill="#FFEB3B"><path d="M3 3h18v18H3z"></path></svg><svg focusable="false" aria-label=""
-                                                                                         fill="#757575"
-                                                                                         viewBox="0 0 24 24" height="36"
-                                                                                         width="36" style={{
-                                left: '0px',
-                                position: 'absolute',
-                                top: '0px'
-                            }}><path
+                                fill="#FFEB3B"><path d="M3 3h18v18H3z"></path></svg>
+                                <svg focusable="false" aria-label=""
+                                 fill="#757575"
+                                 viewBox="0 0 24 24" height="36"
+                                 width="36" style={{
+                                    left: '0px',
+                                    position: 'absolute',
+                                    top: '0px'
+                                }}>
+                                    <path
                                 d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path></svg></span>
                             </div>
-                            <div className={`tool ${(this.state.editMode == 'hide') ? 'tool-active' : ''} hide`}
+                            <div className={`tool ${(this.state.toolBarType == 'hide') ? 'tool-active' : ''} hide`}
                                  onClick={() => {
                                      this.setState({
-                                         editMode: 'hide',
+                                         toolBarType: 'hide',
                                      })
                                  }}
                             ><span
                                 style={{display: 'inline-block', position: 'relative', height: '36px', width: '36px'}}><svg
                                 focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36" fill="#000"><path
                                 d="M3 3h18v18H3z"></path></svg></span></div>
-                            <div className={`tool ${(this.state.editMode == 'text') ? 'tool-active' : ''} text`}
+                            <div className={`tool ${(this.state.toolBarType == 'text') ? 'tool-active' : ''} text`}
                                  onClick={() => {
                                      this.setState({
-                                         editMode: 'text',
+                                         toolBarType: 'text',
                                      })
                                  }}
                             ><span
                                 style={{display: 'inline-block', position: 'relative', height: '36px', width: '36px'}}
                                 draggable="false">A</span></div>
-                            <div className="button"><span className="flatbutton" onClick={this.editCancel.bind(this)}>DONE</span>
+                            <div className="button"><span className="flatbutton" draggable="false" onClick={this.editCancel.bind(this)}>DONE</span>
                             </div>
                         </div>
                 }
+                <div ref="hightlight" className="hightlight-area">
+                    {
+                        state.hightlightItem.map((data, k) => {
+                            return (
+                                <div key={k} className="rect" style={{width: `${data.width}px`, height: `${data.height}px`, left: `${data.sx}px`, top: `${data.sy}px`}}>
+                                    <span className="close">×</span>
+                                </div>
+                            )
+                        })
+                    }
+                </div>
+                <div ref="black" className="black-area"></div>
                 <canvas ref="canvas" id="feedbackCanvas" data-html2canvas-ignore="true"></canvas>
             </div>
         )

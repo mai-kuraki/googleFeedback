@@ -4,7 +4,7 @@
 #googleFeedback {
     width: 100%;
     height: 100%;
-    position: fixed;
+    position: absolute;
     padding: 0px;
     border: none;
     left: 0px;
@@ -81,6 +81,35 @@
             left: 0px;
             top: 0px;
             z-index: 997;
+            cursor: crosshair;
+        }
+        .hightlight-area{
+            width: 0px;
+            height: 0px;
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            z-index: 998;
+            .rect{
+                position: absolute;
+                background: rgba(0,0,0,.3);
+                &:hover{
+                    cursor: default;
+                    background: rgba(55, 131, 249, 0.2);
+                }
+            }
+        }
+        .black-area{
+            width: 0px;
+            height: 0px;
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            z-index: 999;
+            .rect{
+                position: absolute;
+                background: none;
+            }
         }
         .dialog{
             width: 360px;
@@ -337,7 +366,7 @@
                     }
                 }
                 &:before{
-                    content: '高亮问题区域';
+                    content: '突显问题';
                     display: none;
                     padding: 6px 12px;
                     font-size: 12px;

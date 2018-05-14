@@ -7,21 +7,21 @@ class GoogleFeedback extends React.Component {
         super();
         this.state = {
             submit: false,
-            windowHeight: 0,
+            docHeight: 0,
         }
     }
 
     componentDidMount() {
-        let windowHeight = window.innerHeight;
+        let docHeight = document.body.clientHeight ;
         this.setState({
-            windowHeight: windowHeight,
+            docHeight: docHeight,
         })
     }
 
     render() {
         let state = this.state;
         return (
-            <div id="googleFeedback" style={{height: `${state.windowHeight}px`}}>
+            <div id="googleFeedback" style={{height: `${state.docHeight}px`}}>
                 {
                     this.state.submit?
                         <div className="feedback-submiting-icon">

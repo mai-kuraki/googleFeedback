@@ -13096,7 +13096,7 @@ var GoogleFeedback = function (_React$Component) {
 
         _this.state = {
             submit: false,
-            windowHeight: 0
+            docHeight: 0
         };
         return _this;
     }
@@ -13104,9 +13104,9 @@ var GoogleFeedback = function (_React$Component) {
     _createClass(GoogleFeedback, [{
         key: 'componentDidMount',
         value: function componentDidMount() {
-            var windowHeight = window.innerHeight;
+            var docHeight = document.body.clientHeight;
             this.setState({
-                windowHeight: windowHeight
+                docHeight: docHeight
             });
         }
     }, {
@@ -13115,7 +13115,7 @@ var GoogleFeedback = function (_React$Component) {
             var state = this.state;
             return _react2.default.createElement(
                 'div',
-                { id: 'googleFeedback', style: { height: state.windowHeight + 'px' } },
+                { id: 'googleFeedback', style: { height: state.docHeight + 'px' } },
                 this.state.submit ? _react2.default.createElement(
                     'div',
                     { className: 'feedback-submiting-icon' },
@@ -31963,6 +31963,8 @@ var fbCrossOrigin = [];
 
 var host = 'http://127.0.0.1:5000';
 
+var hightLightEl = ['button', 'a', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'p', 'i', 'strong', 'small', 'sub', 'sup', 'b', 'time', 'img', 'caption', 'input', 'label', 'legend', 'select', 'textarea', 'details', 'summary'];
+
 var Window = function (_React$Component) {
     _inherits(Window, _React$Component);
 
@@ -32006,7 +32008,10 @@ var Window = function (_React$Component) {
             shotOpen: false,
             loading: false,
             screenshotEdit: false,
-            editMode: false
+            editMode: true,
+            toolBarType: 'hightlight',
+            hightlightItem: [],
+            blackItem: []
         };
         _this.move = false;
         _this.eX = 0;
@@ -32044,9 +32049,74 @@ var Window = function (_React$Component) {
             }
         }
     }, {
+        key: 'inElement',
+        value: function inElement(e) {
+            var x = e.clientX,
+                y = e.clientY;
+            var el = document.elementsFromPoint(x, y)[3];
+            this.refs.canvas.style.cursor = 'crosshair';
+            if (el && hightLightEl.indexOf(el.nodeName.toLocaleLowerCase()) > -1) {
+                var rect = el.getBoundingClientRect();
+                var rectInfo = {
+                    sx: rect.left + document.documentElement.scrollLeft - 3,
+                    sy: rect.top + document.documentElement.scrollTop - 3,
+                    width: rect.width + 6,
+                    height: rect.height + 6
+                };
+                return rectInfo;
+            } else {
+                return false;
+            }
+        }
+    }, {
+        key: 'elementHelper',
+        value: function elementHelper(e) {
+            var rectInfo = this.inElement(e);
+            if (rectInfo) {
+                this.refs.canvas.style.cursor = 'pointer';
+                this.drawElementHelper(rectInfo);
+            } else {
+                if (this.hasDrawHelper) {
+                    this.initCanvas();
+                    this.hasDrawHelper = false;
+                }
+            }
+        }
+    }, {
+        key: 'elementHelperClick',
+        value: function elementHelperClick(e) {
+            var rectInfo = this.inElement(e);
+            if (rectInfo) {
+                var hightlightItem = this.state.hightlightItem;
+                hightlightItem.push(rectInfo);
+                this.setState({
+                    hightlightItem: hightlightItem
+                });
+            }
+        }
+    }, {
+        key: 'drawElementHelper',
+        value: function drawElementHelper(info) {
+            this.initCanvas();
+            this.hasDrawHelper = true;
+            this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
+            this.ctx.lineWidth = '3';
+            this.ctx.strokeStyle = '#FEEA4E';
+            this.ctx.rect(info.sx, info.sy, info.width, info.height);
+            this.ctx.stroke();
+        }
+    }, {
+        key: 'addEventListener',
+        value: function addEventListener() {
+            document.addEventListener('mousemove', this.elementHelper.bind(this));
+            document.addEventListener('click', this.elementHelperClick.bind(this));
+        }
+    }, {
         key: 'componentDidMount',
         value: function componentDidMount() {
             this.initCanvas();
+            this.addEventListener();
+            this.toEditMode();
         }
     }, {
         key: 'getDevice',
@@ -32071,14 +32141,14 @@ var Window = function (_React$Component) {
             if (!this.ctx) {
                 this.ctx = canvas.getContext('2d');
             }
-            var windowWidth = window.innerWidth,
-                windowHeight = window.innerHeight;
-            canvas.width = windowWidth;
-            canvas.height = windowHeight;
-            canvas.style.width = windowWidth;
-            canvas.style.height = windowHeight;
+            var docWidth = document.body.clientWidth,
+                docHeight = document.body.clientHeight;
+            canvas.width = docWidth;
+            canvas.height = docHeight;
+            canvas.style.width = docWidth;
+            canvas.style.height = docHeight;
             this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            this.ctx.fillRect(0, 0, windowWidth, windowHeight);
+            this.ctx.fillRect(0, 0, docWidth, docHeight);
         }
     }, {
         key: 'loadingState',
@@ -32307,7 +32377,8 @@ var Window = function (_React$Component) {
 
             for (var i = 0; i < iframeItem.length; i++) {
                 _loop2(i);
-            };
+            }
+            ;
             if (pItem.length > 0) {
                 Promise.all(pItem).then(function () {
                     resolve();
@@ -32364,7 +32435,6 @@ var Window = function (_React$Component) {
                 'div',
                 { className: 'feedback-window', onMouseMove: this.handleMouseMove.bind(this),
                     onMouseUp: this.handleMoveMouseUp.bind(this) },
-                _react2.default.createElement('div', { className: 'dialog-mask' }),
                 !state.editMode ? _react2.default.createElement(
                     'div',
                     { id: 'feedbackDialog', className: 'dialog', 'data-html2canvas-ignore': 'true' },
@@ -32507,44 +32577,14 @@ var Window = function (_React$Component) {
                             { className: 'actions' },
                             _react2.default.createElement(
                                 'div',
-                                { className: 'flatbutton cancel', style: { color: '#757575' }, onClick: function onClick() {
-                                        {/*this.reset();*/
-                                        }
-                                        {/*this.setState({*/
-                                        }
-                                        {/*text: '',*/
-                                        }
-                                        {/*});*/
-                                        }
-                                        {/*this.props.onRequestCancel();*/
-                                        }
-                                    } },
+                                { className: 'flatbutton cancel', style: { color: '#757575' }, onClick: function onClick() {} },
                                 '\u53D6\u6D88'
                             ),
                             _react2.default.createElement(
                                 'div',
                                 { className: 'flatbutton confirm',
                                     style: { color: this.props.themeColor || '#3986FF' },
-                                    onClick: function onClick() {
-                                        {/*this.getSysInfo();*/
-                                        }
-                                        {/*let text = this.state.text;*/
-                                        }
-                                        {/*let src = $('#screenshotPrev').attr('src') || '';*/
-                                        }
-                                        {/*setTimeout(() => {*/
-                                        }
-                                        {/*this.setState({*/
-                                        }
-                                        {/*text: '',*/
-                                        }
-                                        {/*});*/
-                                        }
-                                        {/*this.props.onRequestConfirm(text, this.state.sysInfo, src);*/
-                                        }
-                                        {/*});*/
-                                        }
-                                    }
+                                    onClick: function onClick() {}
                                 },
                                 '\u53D1\u9001'
                             )
@@ -32573,10 +32613,10 @@ var Window = function (_React$Component) {
                     _react2.default.createElement(
                         'div',
                         {
-                            className: 'tool ' + (this.state.editMode == 'hightlight' ? 'tool-active' : '') + ' hight-light',
+                            className: 'tool ' + (this.state.toolBarType == 'hightlight' ? 'tool-active' : '') + ' hight-light',
                             onClick: function onClick() {
                                 _this7.setState({
-                                    editMode: 'hightlight'
+                                    toolBarType: 'hightlight'
                                 });
                             }
                         },
@@ -32608,10 +32648,10 @@ var Window = function (_React$Component) {
                     ),
                     _react2.default.createElement(
                         'div',
-                        { className: 'tool ' + (this.state.editMode == 'hide' ? 'tool-active' : '') + ' hide',
+                        { className: 'tool ' + (this.state.toolBarType == 'hide' ? 'tool-active' : '') + ' hide',
                             onClick: function onClick() {
                                 _this7.setState({
-                                    editMode: 'hide'
+                                    toolBarType: 'hide'
                                 });
                             }
                         },
@@ -32630,10 +32670,10 @@ var Window = function (_React$Component) {
                     ),
                     _react2.default.createElement(
                         'div',
-                        { className: 'tool ' + (this.state.editMode == 'text' ? 'tool-active' : '') + ' text',
+                        { className: 'tool ' + (this.state.toolBarType == 'text' ? 'tool-active' : '') + ' text',
                             onClick: function onClick() {
                                 _this7.setState({
-                                    editMode: 'text'
+                                    toolBarType: 'text'
                                 });
                             }
                         },
@@ -32650,11 +32690,27 @@ var Window = function (_React$Component) {
                         { className: 'button' },
                         _react2.default.createElement(
                             'span',
-                            { className: 'flatbutton', onClick: this.editCancel.bind(this) },
+                            { className: 'flatbutton', draggable: 'false', onClick: this.editCancel.bind(this) },
                             'DONE'
                         )
                     )
                 ),
+                _react2.default.createElement(
+                    'div',
+                    { ref: 'hightlight', className: 'hightlight-area' },
+                    state.hightlightItem.map(function (data, k) {
+                        return _react2.default.createElement(
+                            'div',
+                            { key: k, className: 'rect', style: { width: data.width + 'px', height: data.height + 'px', left: data.sx + 'px', top: data.sy + 'px' } },
+                            _react2.default.createElement(
+                                'span',
+                                { className: 'close' },
+                                '\xD7'
+                            )
+                        );
+                    })
+                ),
+                _react2.default.createElement('div', { ref: 'black', className: 'black-area' }),
                 _react2.default.createElement('canvas', { ref: 'canvas', id: 'feedbackCanvas', 'data-html2canvas-ignore': 'true' })
             );
         }
