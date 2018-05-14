@@ -211,6 +211,9 @@ export default class Window extends React.Component {
         this.eX = 0;
         this.eY = 0;
         this.ctx = null;
+        this.dragRect = false;
+        this.startX = 0;
+        this.startY = 0;
     }
 
     componentWillMount() {
@@ -245,10 +248,10 @@ export default class Window extends React.Component {
         if(el && hightLightEl.indexOf(el.nodeName.toLocaleLowerCase()) > -1) {
             let rect = el.getBoundingClientRect();
             let rectInfo = {
-                sx: rect.left + document.documentElement.scrollLeft - 3,
-                sy: rect.top + document.documentElement.scrollTop - 3,
-                width: rect.width + 6,
-                height: rect.height + 6
+                sx: rect.left + document.documentElement.scrollLeft,
+                sy: rect.top + document.documentElement.scrollTop,
+                width: rect.width,
+                height: rect.height
             };
             return rectInfo;
         }else {
@@ -261,37 +264,85 @@ export default class Window extends React.Component {
         if(rectInfo) {
             this.refs.canvas.style.cursor = 'pointer';
             this.drawElementHelper(rectInfo);
+            this.hasHelper = true;
         }else {
-            if(this.hasDrawHelper) {
-                this.initCanvas();
-                this.hasDrawHelper = false;
+            if(this.hasHelper) {
+                this.hasHelper = false;
             }
+            this.initCanvas();
         }
+        this.drawHightlight();
     }
 
     elementHelperClick(e) {
+        if(this.dragRect) return;
+        let nodeName = e.target.nodeName;
+        if(nodeName != 'CANVAS') return;
         let rectInfo = this.inElement(e);
         if(rectInfo) {
-            let hightlightItem = this.state.hightlightItem;
-            hightlightItem.push(rectInfo);
-            this.setState({
-                hightlightItem: hightlightItem,
-            })
+            let toolBarType = this.state.toolBarType;
+            if(toolBarType == 'hightlight') {
+                let hightlightItem = this.state.hightlightItem;
+                hightlightItem.push(rectInfo);
+                this.setState({
+                    hightlightItem: hightlightItem,
+                })
+            }else if(toolBarType == 'black') {
+                let blackItem = this.state.blackItem;
+                blackItem.push(rectInfo);
+                this.setState({
+                    blackItem: blackItem,
+                })
+            }
+
         }
     }
 
     drawElementHelper(info) {
         this.initCanvas();
-        this.hasDrawHelper = true;
-        this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
-        this.ctx.lineWidth = '3';
-        this.ctx.strokeStyle = '#FEEA4E';
-        this.ctx.rect(info.sx, info.sy, info.width, info.height);
-        this.ctx.stroke();
+        let toolBarType = this.state.toolBarType;
+        if(toolBarType == 'hightlight') {
+            this.ctx.lineWidth = '3';
+            this.ctx.strokeStyle = '#FEEA4E';
+            this.ctx.rect(info.sx, info.sy, info.width, info.height);
+            this.ctx.stroke();
+            this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
+        }else if(toolBarType == 'black') {
+            this.ctx.fillStyle = 'rgba(0,0,0,.4)';
+            this.ctx.fillRect(info.sx, info.sy, info.width, info.height);
+        }
+    }
+
+    documentMouseMove(e) {
+        if(this.canvasMD) {
+            if(!this.dragRect) {
+                this.dragRect = true;
+            }
+            let toolBarType = this.state.toolBarType;
+            let clientX = e.clientX + document.documentElement.scrollLeft,
+                clientY = e.clientY + document.documentElement.scrollTop,
+                width = this.startX - clientX,
+                height = this.startY - clientY;
+            this.initCanvas();
+            this.drawHightlight();
+            if(toolBarType == 'hightlight') {
+                this.ctx.lineWidth = '3';
+                this.ctx.strokeStyle = '#FEEA4E';
+                this.ctx.rect(clientX, clientY, width, height);
+                this.ctx.stroke();
+                this.ctx.clearRect(clientX, clientY, width, height);
+            }else if(toolBarType == 'black') {
+                this.ctx.fillStyle = 'rgba(0,0,0,.4)';
+                this.ctx.fillRect(clientX, clientY, width, height);
+            }
+
+        }else {
+            this.elementHelper(e);
+        }
     }
 
     addEventListener() {
-        document.addEventListener('mousemove', this.elementHelper.bind(this));
+        document.addEventListener('mousemove', this.documentMouseMove.bind(this));
         document.addEventListener('click', this.elementHelperClick.bind(this));
     }
 
@@ -331,6 +382,19 @@ export default class Window extends React.Component {
         this.ctx.fillRect(0, 0, docWidth, docHeight);
     }
 
+    drawHightlight() {
+        let hightlightItem = this.state.hightlightItem;
+        hightlightItem.map((data, k) => {
+            this.ctx.lineWidth = '3';
+            this.ctx.strokeStyle = '#FEEA4E';
+            this.ctx.rect(data.sx, data.sy, data.width, data.height);
+            this.ctx.stroke();
+        });
+        hightlightItem.map((data, k) => {
+            this.ctx.clearRect(data.sx, data.sy, data.width, data.height);
+        });
+    }
+
     loadingState(state) {
         this.setState({
             loading: state,
@@ -361,11 +425,11 @@ export default class Window extends React.Component {
 
     editCancel() {
         this.setState({
-            editStatus: false,
+            editMode: false,
         });
-        // setTimeout(() => {
-        //     this.shotScreen();
-        // })
+        setTimeout(() => {
+            this.shotScreen();
+        })
     }
 
     handleMoveMouseDown(e) {
@@ -376,6 +440,46 @@ export default class Window extends React.Component {
 
     handleMoveMouseUp(e) {
         this.move = false;
+        this.canvasMD = false;
+        if(this.dragRect) {
+            let clientX = e.clientX + document.documentElement.scrollLeft,
+                clientY = e.clientY + document.documentElement.scrollTop,
+                width = this.startX - clientX,
+                height = this.startY - clientY,
+                toolBarType = this.state.toolBarType,
+                hightlightItem = this.state.hightlightItem,
+                blackItem = this.state.blackItem,
+                obj = {
+                    sx: clientX,
+                    sy: clientY,
+                    width: width,
+                    height: height
+                };
+            if(toolBarType == 'hightlight') {
+                hightlightItem.push(obj);
+                this.setState({
+                    hightlightItem: hightlightItem,
+                });
+            }else if(toolBarType == 'black') {
+                if(width < 0) {
+                    obj.sx = obj.sx + width;
+                    obj.width = Math.abs(width);
+                }
+                if(height < 0) {
+                    obj.sy = obj.sy + height;
+                    obj.height = Math.abs(height);
+                }
+                blackItem.push(obj);
+                this.setState({
+                    blackItem: blackItem,
+                })
+            }
+            setTimeout(() => {
+                this.dragRect = false;
+                console.log(this.state.blackItem)
+                this.drawHightlight();
+            });
+        }
     }
 
     handleMouseMove(e) {
@@ -447,7 +551,7 @@ export default class Window extends React.Component {
                                     imgItem[i].setAttribute('src', 'data:image/png;base64,' + data.img);
                                     resolve2();
                                 } else {
-                                    reject2();
+                                    resolve2();
                                 }
                             });
                         }
@@ -532,7 +636,6 @@ export default class Window extends React.Component {
                 }
             }))
         }
-        ;
         if (pItem.length > 0) {
             Promise.all(pItem).then(() => {
                 resolve();
@@ -567,14 +670,41 @@ export default class Window extends React.Component {
                     this.setState({
                         screenshotEdit: true,
                     })
-                }
+                };
+                this.loadingState(false);
             }).catch((e) => {
                 this.setState({
                     screenshotEdit: false,
                 });
+                this.loadingState(false);
                 console.log(e)
             });
         });
+    }
+
+    clearHightlight(k, e) {
+        let hightlightItem = this.state.hightlightItem;
+        hightlightItem.splice(k, 1);
+        this.setState({
+            hightlightItem: hightlightItem,
+        });
+        setTimeout(() => {
+            this.drawHightlight();
+        });
+    }
+
+    clearBlack(k, e) {
+        let blackItem = this.state.blackItem;
+        blackItem.splice(k, 1);
+        this.setState({
+            blackItem: blackItem,
+        });
+    }
+
+    canvasMouseDown(e) {
+        this.canvasMD = true;
+        this.startX = e.clientX + document.documentElement.scrollLeft;
+        this.startY = e.clientY + document.documentElement.scrollTop;
     }
 
     render() {
@@ -584,8 +714,12 @@ export default class Window extends React.Component {
             <div className="feedback-window" onMouseMove={this.handleMouseMove.bind(this)}
                  onMouseUp={this.handleMoveMouseUp.bind(this)}>
                 {
+                    !state.editMode?
+                        <div className="dialog-mask"></div>:null
+                }
+                {
                     !state.editMode ?
-                        <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true">
+                        <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true" style={{left:'50%',top:'50%'}}>
                             <div className="title"
                                  style={{background: props.themeColor || '#3986FF'}}>{props.title || '问题反馈'}</div>
                             <div className="feedback-area">
@@ -707,10 +841,10 @@ export default class Window extends React.Component {
                                     <path
                                 d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path></svg></span>
                             </div>
-                            <div className={`tool ${(this.state.toolBarType == 'hide') ? 'tool-active' : ''} hide`}
+                            <div className={`tool ${(this.state.toolBarType == 'black') ? 'tool-active' : ''} hide`}
                                  onClick={() => {
                                      this.setState({
-                                         toolBarType: 'hide',
+                                         toolBarType: 'black',
                                      })
                                  }}
                             ><span
@@ -735,14 +869,36 @@ export default class Window extends React.Component {
                         state.hightlightItem.map((data, k) => {
                             return (
                                 <div key={k} className="rect" style={{width: `${data.width}px`, height: `${data.height}px`, left: `${data.sx}px`, top: `${data.sy}px`}}>
-                                    <span className="close">×</span>
+                                    <span className="close" onClick={this.clearHightlight.bind(this, k)}>
+                                        <svg viewBox="0 0 1024 1024"
+                                             width="16" height="16">
+                                            <path d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
+                                        </svg>
+                                    </span>
                                 </div>
                             )
                         })
                     }
                 </div>
-                <div ref="black" className="black-area"></div>
-                <canvas ref="canvas" id="feedbackCanvas" data-html2canvas-ignore="true"></canvas>
+                <div ref="black" className="black-area">
+                    {
+                        state.blackItem.map((data, k) => {
+                            return (
+                                <div key={k} className="rect" style={{width: `${data.width}px`, height: `${data.height}px`, left: `${data.sx}px`, top: `${data.sy}px`}}>
+                                    <span className="close" onClick={this.clearBlack.bind(this, k)}>
+                                        <svg viewBox="0 0 1024 1024"
+                                             width="16" height="16">
+                                            <path d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                            )
+                        })
+                    }
+                </div>
+                <canvas ref="canvas" id="feedbackCanvas"
+                        onMouseDown={this.canvasMouseDown.bind(this)}
+                ></canvas>
             </div>
         )
     }

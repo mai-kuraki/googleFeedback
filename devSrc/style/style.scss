@@ -67,12 +67,13 @@
         position: relative;
         .dialog-mask{
             position: absolute;
-            z-index: 998;
+            z-index: 999;
             width: 100%;
             height: 100%;
             background: none;
             left: 0px;
             top: 0px;
+            cursor: default;
         }
         #feedbackCanvas{
             width: 100%;
@@ -92,10 +93,28 @@
             z-index: 998;
             .rect{
                 position: absolute;
-                background: rgba(0,0,0,.3);
+                background: none;
                 &:hover{
                     cursor: default;
-                    background: rgba(55, 131, 249, 0.2);
+                    background: rgba(55, 131, 249, .2);
+                    .close{
+                        display: flex;
+                    }
+                }
+                .close{
+                    width: 24px;
+                    height: 24px;
+                    background: #FFF;
+                    border-radius: 50%;
+                    justify-content: center;
+                    align-items: center;
+                    color: #999;
+                    position: absolute;
+                    right: -6px;
+                    top: -6px;
+                    cursor: pointer;
+                    display: none;
+                    user-select: none;
                 }
             }
         }
@@ -108,7 +127,29 @@
             z-index: 999;
             .rect{
                 position: absolute;
-                background: none;
+                background: #000;
+                &:hover{
+                    cursor: default;
+                    background: rgba(0, 0, 0, .8);
+                    .close{
+                        display: flex;
+                    }
+                }
+                .close{
+                    width: 24px;
+                    height: 24px;
+                    background: #FFF;
+                    border-radius: 50%;
+                    justify-content: center;
+                    align-items: center;
+                    color: #999;
+                    position: absolute;
+                    right: -6px;
+                    top: -6px;
+                    cursor: pointer;
+                    display: none;
+                    user-select: none;
+                }
             }
         }
         .dialog{

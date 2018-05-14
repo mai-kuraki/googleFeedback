@@ -32017,6 +32017,9 @@ var Window = function (_React$Component) {
         _this.eX = 0;
         _this.eY = 0;
         _this.ctx = null;
+        _this.dragRect = false;
+        _this.startX = 0;
+        _this.startY = 0;
         return _this;
     }
 
@@ -32058,10 +32061,10 @@ var Window = function (_React$Component) {
             if (el && hightLightEl.indexOf(el.nodeName.toLocaleLowerCase()) > -1) {
                 var rect = el.getBoundingClientRect();
                 var rectInfo = {
-                    sx: rect.left + document.documentElement.scrollLeft - 3,
-                    sy: rect.top + document.documentElement.scrollTop - 3,
-                    width: rect.width + 6,
-                    height: rect.height + 6
+                    sx: rect.left + document.documentElement.scrollLeft,
+                    sy: rect.top + document.documentElement.scrollTop,
+                    width: rect.width,
+                    height: rect.height
                 };
                 return rectInfo;
             } else {
@@ -32075,40 +32078,87 @@ var Window = function (_React$Component) {
             if (rectInfo) {
                 this.refs.canvas.style.cursor = 'pointer';
                 this.drawElementHelper(rectInfo);
+                this.hasHelper = true;
             } else {
-                if (this.hasDrawHelper) {
-                    this.initCanvas();
-                    this.hasDrawHelper = false;
+                if (this.hasHelper) {
+                    this.hasHelper = false;
                 }
+                this.initCanvas();
             }
+            this.drawHightlight();
         }
     }, {
         key: 'elementHelperClick',
         value: function elementHelperClick(e) {
+            if (this.dragRect) return;
+            var nodeName = e.target.nodeName;
+            if (nodeName != 'CANVAS') return;
             var rectInfo = this.inElement(e);
             if (rectInfo) {
-                var hightlightItem = this.state.hightlightItem;
-                hightlightItem.push(rectInfo);
-                this.setState({
-                    hightlightItem: hightlightItem
-                });
+                var toolBarType = this.state.toolBarType;
+                if (toolBarType == 'hightlight') {
+                    var hightlightItem = this.state.hightlightItem;
+                    hightlightItem.push(rectInfo);
+                    this.setState({
+                        hightlightItem: hightlightItem
+                    });
+                } else if (toolBarType == 'black') {
+                    var blackItem = this.state.blackItem;
+                    blackItem.push(rectInfo);
+                    this.setState({
+                        blackItem: blackItem
+                    });
+                }
             }
         }
     }, {
         key: 'drawElementHelper',
         value: function drawElementHelper(info) {
             this.initCanvas();
-            this.hasDrawHelper = true;
-            this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
-            this.ctx.lineWidth = '3';
-            this.ctx.strokeStyle = '#FEEA4E';
-            this.ctx.rect(info.sx, info.sy, info.width, info.height);
-            this.ctx.stroke();
+            var toolBarType = this.state.toolBarType;
+            if (toolBarType == 'hightlight') {
+                this.ctx.lineWidth = '3';
+                this.ctx.strokeStyle = '#FEEA4E';
+                this.ctx.rect(info.sx, info.sy, info.width, info.height);
+                this.ctx.stroke();
+                this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
+            } else if (toolBarType == 'black') {
+                this.ctx.fillStyle = 'rgba(0,0,0,.4)';
+                this.ctx.fillRect(info.sx, info.sy, info.width, info.height);
+            }
+        }
+    }, {
+        key: 'documentMouseMove',
+        value: function documentMouseMove(e) {
+            if (this.canvasMD) {
+                if (!this.dragRect) {
+                    this.dragRect = true;
+                }
+                var toolBarType = this.state.toolBarType;
+                var clientX = e.clientX + document.documentElement.scrollLeft,
+                    clientY = e.clientY + document.documentElement.scrollTop,
+                    width = this.startX - clientX,
+                    height = this.startY - clientY;
+                this.initCanvas();
+                this.drawHightlight();
+                if (toolBarType == 'hightlight') {
+                    this.ctx.lineWidth = '3';
+                    this.ctx.strokeStyle = '#FEEA4E';
+                    this.ctx.rect(clientX, clientY, width, height);
+                    this.ctx.stroke();
+                    this.ctx.clearRect(clientX, clientY, width, height);
+                } else if (toolBarType == 'black') {
+                    this.ctx.fillStyle = 'rgba(0,0,0,.4)';
+                    this.ctx.fillRect(clientX, clientY, width, height);
+                }
+            } else {
+                this.elementHelper(e);
+            }
         }
     }, {
         key: 'addEventListener',
         value: function addEventListener() {
-            document.addEventListener('mousemove', this.elementHelper.bind(this));
+            document.addEventListener('mousemove', this.documentMouseMove.bind(this));
             document.addEventListener('click', this.elementHelperClick.bind(this));
         }
     }, {
@@ -32151,6 +32201,22 @@ var Window = function (_React$Component) {
             this.ctx.fillRect(0, 0, docWidth, docHeight);
         }
     }, {
+        key: 'drawHightlight',
+        value: function drawHightlight() {
+            var _this3 = this;
+
+            var hightlightItem = this.state.hightlightItem;
+            hightlightItem.map(function (data, k) {
+                _this3.ctx.lineWidth = '3';
+                _this3.ctx.strokeStyle = '#FEEA4E';
+                _this3.ctx.rect(data.sx, data.sy, data.width, data.height);
+                _this3.ctx.stroke();
+            });
+            hightlightItem.map(function (data, k) {
+                _this3.ctx.clearRect(data.sx, data.sy, data.width, data.height);
+            });
+        }
+    }, {
         key: 'loadingState',
         value: function loadingState(state) {
             this.setState({
@@ -32170,13 +32236,13 @@ var Window = function (_React$Component) {
     }, {
         key: 'toEditMode',
         value: function toEditMode() {
-            var _this3 = this;
+            var _this4 = this;
 
             this.setState({
                 editMode: true
             });
             setTimeout(function () {
-                var toolBar = _this3.refs.toolBar,
+                var toolBar = _this4.refs.toolBar,
                     windowWidth = window.innerWidth,
                     windowHeight = window.innerHeight;
                 toolBar.style.left = windowWidth * 0.5 + 'px';
@@ -32186,12 +32252,14 @@ var Window = function (_React$Component) {
     }, {
         key: 'editCancel',
         value: function editCancel() {
+            var _this5 = this;
+
             this.setState({
-                editStatus: false
+                editMode: false
             });
-            // setTimeout(() => {
-            //     this.shotScreen();
-            // })
+            setTimeout(function () {
+                _this5.shotScreen();
+            });
         }
     }, {
         key: 'handleMoveMouseDown',
@@ -32203,7 +32271,49 @@ var Window = function (_React$Component) {
     }, {
         key: 'handleMoveMouseUp',
         value: function handleMoveMouseUp(e) {
+            var _this6 = this;
+
             this.move = false;
+            this.canvasMD = false;
+            if (this.dragRect) {
+                var clientX = e.clientX + document.documentElement.scrollLeft,
+                    clientY = e.clientY + document.documentElement.scrollTop,
+                    width = this.startX - clientX,
+                    height = this.startY - clientY,
+                    toolBarType = this.state.toolBarType,
+                    hightlightItem = this.state.hightlightItem,
+                    blackItem = this.state.blackItem,
+                    obj = {
+                    sx: clientX,
+                    sy: clientY,
+                    width: width,
+                    height: height
+                };
+                if (toolBarType == 'hightlight') {
+                    hightlightItem.push(obj);
+                    this.setState({
+                        hightlightItem: hightlightItem
+                    });
+                } else if (toolBarType == 'black') {
+                    if (width < 0) {
+                        obj.sx = obj.sx + width;
+                        obj.width = Math.abs(width);
+                    }
+                    if (height < 0) {
+                        obj.sy = obj.sy + height;
+                        obj.height = Math.abs(height);
+                    }
+                    blackItem.push(obj);
+                    this.setState({
+                        blackItem: blackItem
+                    });
+                }
+                setTimeout(function () {
+                    _this6.dragRect = false;
+                    console.log(_this6.state.blackItem);
+                    _this6.drawHightlight();
+                });
+            }
         }
     }, {
         key: 'handleMouseMove',
@@ -32238,7 +32348,7 @@ var Window = function (_React$Component) {
     }, {
         key: 'handleCorsImg',
         value: function handleCorsImg(parent, resolve, reject) {
-            var _this4 = this;
+            var _this7 = this;
 
             var origin = location.origin;
             var pItem = [];
@@ -32252,7 +32362,7 @@ var Window = function (_React$Component) {
             var _loop = function _loop(i) {
                 var src = imgItem[i].src;
                 pItem[i] = new Promise(function (resolve2, reject2) {
-                    if (src && !reg.test(src) && src.indexOf(origin) == -1 && src.indexOf('data:image/png;base64,') == -1 && _this4.isVisible(imgItem[i])) {
+                    if (src && !reg.test(src) && src.indexOf(origin) == -1 && src.indexOf('data:image/png;base64,') == -1 && _this7.isVisible(imgItem[i])) {
                         var inList = false;
                         (fbCrossOrigin || []).map(function (d, k) {
                             if (d && src.indexOf(d) > -1) {
@@ -32281,7 +32391,7 @@ var Window = function (_React$Component) {
                                         imgItem[i].setAttribute('src', 'data:image/png;base64,' + data.img);
                                         resolve2();
                                     } else {
-                                        reject2();
+                                        resolve2();
                                     }
                                 });
                             }
@@ -32306,7 +32416,7 @@ var Window = function (_React$Component) {
     }, {
         key: 'handleIframe',
         value: function handleIframe(parent, resolve, reject) {
-            var _this5 = this;
+            var _this8 = this;
 
             var iframeItem = parent.getElementsByTagName('iframe');
             if (iframeItem.length == 0) {
@@ -32352,16 +32462,16 @@ var Window = function (_React$Component) {
                             return;
                         }
                         var imgPromise = new Promise(function (resolve2, reject2) {
-                            if (_this5.isVisible(iframe)) {
-                                _this5.handleCorsImg(doc, resolve2, reject2);
+                            if (_this8.isVisible(iframe)) {
+                                _this8.handleCorsImg(doc, resolve2, reject2);
                             } else {
                                 resolve2();
                             }
                         });
 
                         var iframePromise = new Promise(function (resolve3, reject3) {
-                            if (_this5.isVisible(iframe)) {
-                                _this5.handleIframe(doc, resolve3, reject3);
+                            if (_this8.isVisible(iframe)) {
+                                _this8.handleIframe(doc, resolve3, reject3);
                             } else {
                                 resolve3();
                             }
@@ -32378,7 +32488,6 @@ var Window = function (_React$Component) {
             for (var i = 0; i < iframeItem.length; i++) {
                 _loop2(i);
             }
-            ;
             if (pItem.length > 0) {
                 Promise.all(pItem).then(function () {
                     resolve();
@@ -32390,17 +32499,17 @@ var Window = function (_React$Component) {
     }, {
         key: 'shotScreen',
         value: function shotScreen() {
-            var _this6 = this;
+            var _this9 = this;
 
             if (this.state.loading) return;
             this.loadingState(true);
 
             var imgPromise = new Promise(function (resolve, reject) {
-                _this6.handleCorsImg(document.body, resolve, reject);
+                _this9.handleCorsImg(document.body, resolve, reject);
             });
 
             var iframePromsie = new Promise(function (resolve, reject) {
-                _this6.handleIframe(document.body, resolve, reject);
+                _this9.handleIframe(document.body, resolve, reject);
             });
             Promise.all([imgPromise, iframePromsie]).then(function () {
                 (0, _html2canvas2.default)(document.body, {
@@ -32410,24 +32519,56 @@ var Window = function (_React$Component) {
                     y: (0, _nZepto2.default)(document.body).scrollTop()
                 }).then(function (canvas) {
                     var src = canvas.toDataURL('image/png');
-                    _this6.refs.screenshotPrev.src = src;
-                    _this6.refs.screenshotPrev.onload = function () {
-                        _this6.setState({
+                    _this9.refs.screenshotPrev.src = src;
+                    _this9.refs.screenshotPrev.onload = function () {
+                        _this9.setState({
                             screenshotEdit: true
                         });
                     };
+                    _this9.loadingState(false);
                 }).catch(function (e) {
-                    _this6.setState({
+                    _this9.setState({
                         screenshotEdit: false
                     });
+                    _this9.loadingState(false);
                     console.log(e);
                 });
             });
         }
     }, {
+        key: 'clearHightlight',
+        value: function clearHightlight(k, e) {
+            var _this10 = this;
+
+            var hightlightItem = this.state.hightlightItem;
+            hightlightItem.splice(k, 1);
+            this.setState({
+                hightlightItem: hightlightItem
+            });
+            setTimeout(function () {
+                _this10.drawHightlight();
+            });
+        }
+    }, {
+        key: 'clearBlack',
+        value: function clearBlack(k, e) {
+            var blackItem = this.state.blackItem;
+            blackItem.splice(k, 1);
+            this.setState({
+                blackItem: blackItem
+            });
+        }
+    }, {
+        key: 'canvasMouseDown',
+        value: function canvasMouseDown(e) {
+            this.canvasMD = true;
+            this.startX = e.clientX + document.documentElement.scrollLeft;
+            this.startY = e.clientY + document.documentElement.scrollTop;
+        }
+    }, {
         key: 'render',
         value: function render() {
-            var _this7 = this;
+            var _this11 = this;
 
             var state = this.state,
                 props = this.props;
@@ -32435,9 +32576,10 @@ var Window = function (_React$Component) {
                 'div',
                 { className: 'feedback-window', onMouseMove: this.handleMouseMove.bind(this),
                     onMouseUp: this.handleMoveMouseUp.bind(this) },
+                !state.editMode ? _react2.default.createElement('div', { className: 'dialog-mask' }) : null,
                 !state.editMode ? _react2.default.createElement(
                     'div',
-                    { id: 'feedbackDialog', className: 'dialog', 'data-html2canvas-ignore': 'true' },
+                    { id: 'feedbackDialog', className: 'dialog', 'data-html2canvas-ignore': 'true', style: { left: '50%', top: '50%' } },
                     _react2.default.createElement(
                         'div',
                         { className: 'title',
@@ -32454,7 +32596,7 @@ var Window = function (_React$Component) {
                         ) : null,
                         _react2.default.createElement('textarea', { placeholder: '\u8BF7\u8BF4\u660E\u60A8\u7684\u95EE\u9898\u6216\u5206\u4EAB\u60A8\u7684\u60F3\u6CD5', ref: 'textarea', defaultValue: state.text,
                             onChange: function onChange(e) {
-                                _this7.setState({
+                                _this11.setState({
                                     text: e.target.value,
                                     textError: ''
                                 });
@@ -32615,7 +32757,7 @@ var Window = function (_React$Component) {
                         {
                             className: 'tool ' + (this.state.toolBarType == 'hightlight' ? 'tool-active' : '') + ' hight-light',
                             onClick: function onClick() {
-                                _this7.setState({
+                                _this11.setState({
                                     toolBarType: 'hightlight'
                                 });
                             }
@@ -32648,10 +32790,10 @@ var Window = function (_React$Component) {
                     ),
                     _react2.default.createElement(
                         'div',
-                        { className: 'tool ' + (this.state.toolBarType == 'hide' ? 'tool-active' : '') + ' hide',
+                        { className: 'tool ' + (this.state.toolBarType == 'black' ? 'tool-active' : '') + ' hide',
                             onClick: function onClick() {
-                                _this7.setState({
-                                    toolBarType: 'hide'
+                                _this11.setState({
+                                    toolBarType: 'black'
                                 });
                             }
                         },
@@ -32672,7 +32814,7 @@ var Window = function (_React$Component) {
                         'div',
                         { className: 'tool ' + (this.state.toolBarType == 'text' ? 'tool-active' : '') + ' text',
                             onClick: function onClick() {
-                                _this7.setState({
+                                _this11.setState({
                                     toolBarType: 'text'
                                 });
                             }
@@ -32704,14 +32846,40 @@ var Window = function (_React$Component) {
                             { key: k, className: 'rect', style: { width: data.width + 'px', height: data.height + 'px', left: data.sx + 'px', top: data.sy + 'px' } },
                             _react2.default.createElement(
                                 'span',
-                                { className: 'close' },
-                                '\xD7'
+                                { className: 'close', onClick: _this11.clearHightlight.bind(_this11, k) },
+                                _react2.default.createElement(
+                                    'svg',
+                                    { viewBox: '0 0 1024 1024',
+                                        width: '16', height: '16' },
+                                    _react2.default.createElement('path', { d: 'M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z' })
+                                )
                             )
                         );
                     })
                 ),
-                _react2.default.createElement('div', { ref: 'black', className: 'black-area' }),
-                _react2.default.createElement('canvas', { ref: 'canvas', id: 'feedbackCanvas', 'data-html2canvas-ignore': 'true' })
+                _react2.default.createElement(
+                    'div',
+                    { ref: 'black', className: 'black-area' },
+                    state.blackItem.map(function (data, k) {
+                        return _react2.default.createElement(
+                            'div',
+                            { key: k, className: 'rect', style: { width: data.width + 'px', height: data.height + 'px', left: data.sx + 'px', top: data.sy + 'px' } },
+                            _react2.default.createElement(
+                                'span',
+                                { className: 'close', onClick: _this11.clearBlack.bind(_this11, k) },
+                                _react2.default.createElement(
+                                    'svg',
+                                    { viewBox: '0 0 1024 1024',
+                                        width: '16', height: '16' },
+                                    _react2.default.createElement('path', { d: 'M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z' })
+                                )
+                            )
+                        );
+                    })
+                ),
+                _react2.default.createElement('canvas', { ref: 'canvas', id: 'feedbackCanvas',
+                    onMouseDown: this.canvasMouseDown.bind(this)
+                })
             );
         }
     }]);
