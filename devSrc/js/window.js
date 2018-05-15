@@ -76,10 +76,10 @@ const funcs = {
             vendors = 'Ms O Moz Webkit'.split(' '),
             len = vendors.length;
 
-        return function (prop) {
+        return (prop) => {
             if (prop in div.style) return true;
 
-            prop = prop.replace(/^[a-z]/, function (val) {
+            prop = prop.replace(/^[a-z]/, (val) => {
                 return val.toUpperCase();
             });
 
@@ -93,7 +93,7 @@ const funcs = {
     },
     support_css3_3d: () => {
         let docElement = document.documentElement;
-        let support = this.support_css3('perspective');
+        let support = funcs.support_css3('perspective');
         let body = document.body;
         if (support && 'webkitPerspective' in docElement.style) {
             let style = document.createElement('style');
@@ -199,10 +199,10 @@ export default class Window extends React.Component {
             },
             text: '',
             textError: '',
-            shotOpen: false,
+            shotOpen: true,
             loading: false,
             screenshotEdit: false,
-            editMode: true,
+            editMode: false,
             toolBarType: 'hightlight',
             hightlightItem: [],
             blackItem: [],
@@ -232,11 +232,44 @@ export default class Window extends React.Component {
         }
     }
 
+    getSysInfo() {
+        let sysInfo = this.state.sysInfo;
+        sysInfo.origin = window.location.href;
+        sysInfo.browserType = funcs.browserType();
+        sysInfo.userAgent = navigator.userAgent;
+        sysInfo.appName = navigator.appName;
+        sysInfo.appVersion = navigator.appVersion;
+        sysInfo.cookieEnabled = navigator.cookieEnabled;
+        sysInfo.mimeType = navigator.mimeTypes;
+        sysInfo.platform = navigator.platform;
+        sysInfo.screenWidth = screen.width;
+        sysInfo.screenHeight = screen.height;
+        sysInfo.colorDepth = screen.colorDepth;
+        sysInfo.onLine = navigator.onLine;
+        sysInfo.support_localStorage = funcs.support_localStorage();
+        sysInfo.support_sessionStorage = funcs.support_sessionStorage();
+        sysInfo.support_history = funcs.support_history();
+        sysInfo.support_webSocket = funcs.support_webSocket();
+        sysInfo.support_applicationCache = funcs.support_applicationCache();
+        sysInfo.support_webWorker = funcs.support_webWorker();
+        sysInfo.support_canvas = funcs.support_canvas();
+        sysInfo.support_video = funcs.support_video();
+        sysInfo.support_audio = funcs.support_audio();
+        sysInfo.support_svg = funcs.support_svg();
+        sysInfo.support_css3_3d = funcs.support_css3_3d();
+        sysInfo.support_geolocation = funcs.support_geolocation();
+        sysInfo.plugins = funcs.getPluginName();
+        sysInfo.javaEnabled = navigator.javaEnabled();
+        this.setState({
+            sysInfo: sysInfo,
+        })
+    }
+
     switchCanvasVisible(visible) {
         if (visible) {
-            this.ref.canvas.removeAttribute('data-html2canvas-ignore');
+            this.refs.canvas.removeAttribute('data-html2canvas-ignore');
         } else {
-            this.ref.canvas.setAttribute('data-html2canvas-ignore', 'true');
+            this.refs.canvas.setAttribute('data-html2canvas-ignore', 'true');
         }
     }
 
@@ -245,7 +278,7 @@ export default class Window extends React.Component {
             y = e.clientY;
         let el = document.elementsFromPoint(x, y)[3];
         this.refs.canvas.style.cursor = 'crosshair';
-        if(el && hightLightEl.indexOf(el.nodeName.toLocaleLowerCase()) > -1) {
+        if (el && hightLightEl.indexOf(el.nodeName.toLocaleLowerCase()) > -1) {
             let rect = el.getBoundingClientRect();
             let rectInfo = {
                 sx: rect.left + document.documentElement.scrollLeft,
@@ -254,40 +287,41 @@ export default class Window extends React.Component {
                 height: rect.height
             };
             return rectInfo;
-        }else {
+        } else {
             return false;
         }
     }
 
     elementHelper(e) {
         let rectInfo = this.inElement(e);
-        if(rectInfo) {
+        if (rectInfo) {
             this.refs.canvas.style.cursor = 'pointer';
             this.drawElementHelper(rectInfo);
             this.hasHelper = true;
-        }else {
-            if(this.hasHelper) {
+        } else {
+            if (this.hasHelper) {
                 this.hasHelper = false;
             }
             this.initCanvas();
+            this.drawHightlightBorder();
+            this.drawHightlightArea()
         }
-        this.drawHightlight();
     }
 
     elementHelperClick(e) {
-        if(this.dragRect) return;
+        if (this.dragRect) return;
         let nodeName = e.target.nodeName;
-        if(nodeName != 'CANVAS') return;
+        if (nodeName != 'CANVAS') return;
         let rectInfo = this.inElement(e);
-        if(rectInfo) {
+        if (rectInfo) {
             let toolBarType = this.state.toolBarType;
-            if(toolBarType == 'hightlight') {
+            if (toolBarType == 'hightlight') {
                 let hightlightItem = this.state.hightlightItem;
                 hightlightItem.push(rectInfo);
                 this.setState({
                     hightlightItem: hightlightItem,
                 })
-            }else if(toolBarType == 'black') {
+            } else if (toolBarType == 'black') {
                 let blackItem = this.state.blackItem;
                 blackItem.push(rectInfo);
                 this.setState({
@@ -301,21 +335,25 @@ export default class Window extends React.Component {
     drawElementHelper(info) {
         this.initCanvas();
         let toolBarType = this.state.toolBarType;
-        if(toolBarType == 'hightlight') {
-            this.ctx.lineWidth = '3';
+        if (toolBarType == 'hightlight') {
+            this.ctx.lineWidth = '5';
             this.ctx.strokeStyle = '#FEEA4E';
             this.ctx.rect(info.sx, info.sy, info.width, info.height);
             this.ctx.stroke();
+            this.drawHightlightBorder();
+            this.drawHightlightArea();
             this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
-        }else if(toolBarType == 'black') {
+        } else if (toolBarType == 'black') {
+            this.drawHightlightBorder();
+            this.drawHightlightArea();
             this.ctx.fillStyle = 'rgba(0,0,0,.4)';
             this.ctx.fillRect(info.sx, info.sy, info.width, info.height);
         }
     }
 
     documentMouseMove(e) {
-        if(this.canvasMD) {
-            if(!this.dragRect) {
+        if (this.canvasMD) {
+            if (!this.dragRect) {
                 this.dragRect = true;
             }
             let toolBarType = this.state.toolBarType;
@@ -324,19 +362,21 @@ export default class Window extends React.Component {
                 width = this.startX - clientX,
                 height = this.startY - clientY;
             this.initCanvas();
-            this.drawHightlight();
-            if(toolBarType == 'hightlight') {
-                this.ctx.lineWidth = '3';
+            this.drawHightlightBorder();
+            if (toolBarType == 'hightlight') {
+                this.ctx.lineWidth = '5';
                 this.ctx.strokeStyle = '#FEEA4E';
                 this.ctx.rect(clientX, clientY, width, height);
                 this.ctx.stroke();
+                this.drawHightlightArea();
                 this.ctx.clearRect(clientX, clientY, width, height);
-            }else if(toolBarType == 'black') {
+            } else if (toolBarType == 'black') {
+                this.drawHightlightArea();
                 this.ctx.fillStyle = 'rgba(0,0,0,.4)';
                 this.ctx.fillRect(clientX, clientY, width, height);
             }
 
-        }else {
+        } else {
             this.elementHelper(e);
         }
     }
@@ -349,7 +389,9 @@ export default class Window extends React.Component {
     componentDidMount() {
         this.initCanvas();
         this.addEventListener();
-        this.toEditMode();
+        if (this.state.shotOpen) {
+            this.shotScreen();
+        }
     }
 
     getDevice() {
@@ -382,14 +424,18 @@ export default class Window extends React.Component {
         this.ctx.fillRect(0, 0, docWidth, docHeight);
     }
 
-    drawHightlight() {
+    drawHightlightBorder() {
         let hightlightItem = this.state.hightlightItem;
         hightlightItem.map((data, k) => {
-            this.ctx.lineWidth = '3';
+            this.ctx.lineWidth = '5';
             this.ctx.strokeStyle = '#FEEA4E';
             this.ctx.rect(data.sx, data.sy, data.width, data.height);
             this.ctx.stroke();
         });
+    }
+
+    drawHightlightArea() {
+        let hightlightItem = this.state.hightlightItem;
         hightlightItem.map((data, k) => {
             this.ctx.clearRect(data.sx, data.sy, data.width, data.height);
         });
@@ -441,12 +487,15 @@ export default class Window extends React.Component {
     handleMoveMouseUp(e) {
         this.move = false;
         this.canvasMD = false;
-        if(this.dragRect) {
+        if (this.dragRect) {
             let clientX = e.clientX + document.documentElement.scrollLeft,
                 clientY = e.clientY + document.documentElement.scrollTop,
                 width = this.startX - clientX,
-                height = this.startY - clientY,
-                toolBarType = this.state.toolBarType,
+                height = this.startY - clientY;
+                if(Math.abs(width) < 6 || Math.abs(height) < 6) {
+                    return;
+                }
+            let toolBarType = this.state.toolBarType,
                 hightlightItem = this.state.hightlightItem,
                 blackItem = this.state.blackItem,
                 obj = {
@@ -455,20 +504,20 @@ export default class Window extends React.Component {
                     width: width,
                     height: height
                 };
-            if(toolBarType == 'hightlight') {
+            if (width < 0) {
+                obj.sx = obj.sx + width;
+                obj.width = Math.abs(width);
+            }
+            if (height < 0) {
+                obj.sy = obj.sy + height;
+                obj.height = Math.abs(height);
+            }
+            if (toolBarType == 'hightlight') {
                 hightlightItem.push(obj);
                 this.setState({
                     hightlightItem: hightlightItem,
                 });
-            }else if(toolBarType == 'black') {
-                if(width < 0) {
-                    obj.sx = obj.sx + width;
-                    obj.width = Math.abs(width);
-                }
-                if(height < 0) {
-                    obj.sy = obj.sy + height;
-                    obj.height = Math.abs(height);
-                }
+            } else if (toolBarType == 'black') {
                 blackItem.push(obj);
                 this.setState({
                     blackItem: blackItem,
@@ -476,8 +525,8 @@ export default class Window extends React.Component {
             }
             setTimeout(() => {
                 this.dragRect = false;
-                console.log(this.state.blackItem)
-                this.drawHightlight();
+                this.drawHightlightBorder();
+                this.drawHightlightArea();
             });
         }
     }
@@ -649,7 +698,8 @@ export default class Window extends React.Component {
     shotScreen() {
         if (this.state.loading)return;
         this.loadingState(true);
-
+        let hightlightItem = this.state.hightlightItem;
+        this.switchCanvasVisible(hightlightItem.length > 0);
         let imgPromise = new Promise((resolve, reject) => {
             this.handleCorsImg(document.body, resolve, reject);
         });
@@ -661,8 +711,8 @@ export default class Window extends React.Component {
             html2canvas(document.body, {
                 width: window.innerWidth,
                 height: window.innerHeight,
-                x: $(document.body).scrollLeft(),
-                y: $(document.body).scrollTop(),
+                x: document.documentElement.scrollLeft,
+                y: document.documentElement.scrollTop,
             }).then((canvas) => {
                 let src = canvas.toDataURL('image/png');
                 this.refs.screenshotPrev.src = src;
@@ -689,7 +739,9 @@ export default class Window extends React.Component {
             hightlightItem: hightlightItem,
         });
         setTimeout(() => {
-            this.drawHightlight();
+            this.initCanvas();
+            this.drawHightlightBorder();
+            this.drawHightlightArea();
         });
     }
 
@@ -707,6 +759,13 @@ export default class Window extends React.Component {
         this.startY = e.clientY + document.documentElement.scrollTop;
     }
 
+    send() {
+        this.getSysInfo();
+        setTimeout(() => {
+           console.log(this.state.sysInfo)
+        });
+    }
+
     render() {
         let state = this.state,
             props = this.props;
@@ -714,12 +773,13 @@ export default class Window extends React.Component {
             <div className="feedback-window" onMouseMove={this.handleMouseMove.bind(this)}
                  onMouseUp={this.handleMoveMouseUp.bind(this)}>
                 {
-                    !state.editMode?
-                        <div className="dialog-mask"></div>:null
+                    !state.editMode ?
+                        <div className="dialog-mask"></div> : null
                 }
                 {
                     !state.editMode ?
-                        <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true" style={{left:'50%',top:'50%'}}>
+                        <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true"
+                             style={{left: '50%', top: '50%'}}>
                             <div className="title"
                                  style={{background: props.themeColor || '#3986FF'}}>{props.title || '问题反馈'}</div>
                             <div className="feedback-area">
@@ -753,41 +813,44 @@ export default class Window extends React.Component {
                                     </div>
                                     <label>包含截图</label>
                                 </div>
-                                <div className="screenshot-area">
-                                    {
-                                        state.loading ?
-                                            <div className="loading">
-                                                <div className="loading-icon">
-                                                    <svg viewBox="0 0 40 40"
-                                                         style={{width: '40px', height: '40px', position: 'relative'}}>
-                                                        <circle cx="20" cy="20" r="18.25" fill="none" strokeWidth="3.5"
-                                                                strokeMiterlimit="20"
-                                                                style={{
-                                                                    stroke: props.themeColor || 'rgb(57, 134, 255)',
-                                                                    strokeLnecap: 'round'
-                                                                }}></circle>
-                                                    </svg>
-                                                </div>
-                                                <span className="loading-text">正在加载屏幕截图...</span>
-                                            </div> : null
-                                    }
-                                    <div className="screenshot">
-                                        {
-                                            state.screenshotEdit ?
-                                                <div className="to-edit" onClick={this.toEditMode.bind(this)}>
-                                                    <div className="edit-icon">
-                                                        <svg focusable="false" aria-label="" fill="#757575"
-                                                             viewBox="0 0 24 24" height="48" width="48">
-                                                            <path
-                                                                d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <span className="edit-label">点击编辑高亮或隐藏信息</span>
-                                                </div> : null
-                                        }
-                                        <img id="screenshotPrev" ref="screenshotPrev" src=""/>
-                                    </div>
-                                </div>
+                                {
+                                    state.shotOpen?
+                                        <div className="screenshot-area">
+                                            {
+                                                state.loading ?
+                                                    <div className="loading">
+                                                        <div className="loading-icon">
+                                                            <svg viewBox="0 0 40 40"
+                                                                 style={{width: '40px', height: '40px', position: 'relative'}}>
+                                                                <circle cx="20" cy="20" r="18.25" fill="none" strokeWidth="3.5"
+                                                                        strokeMiterlimit="20"
+                                                                        style={{
+                                                                            stroke: props.themeColor || 'rgb(57, 134, 255)',
+                                                                            strokeLnecap: 'round'
+                                                                        }}></circle>
+                                                            </svg>
+                                                        </div>
+                                                        <span className="loading-text">正在加载屏幕截图...</span>
+                                                    </div> : null
+                                            }
+                                            <div className="screenshot">
+                                                {
+                                                    state.screenshotEdit && !state.loading ?
+                                                        <div className="to-edit" onClick={this.toEditMode.bind(this)}>
+                                                            <div className="edit-icon">
+                                                                <svg focusable="false" aria-label="" fill="#757575"
+                                                                     viewBox="0 0 24 24" height="48" width="48">
+                                                                    <path
+                                                                        d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>
+                                                                </svg>
+                                                            </div>
+                                                            <span className="edit-label">点击编辑高亮或隐藏信息</span>
+                                                        </div> : null
+                                                }
+                                                <img id="screenshotPrev" ref="screenshotPrev" src=""/>
+                                            </div>
+                                        </div>:null
+                                }
                                 <div className="legal">
                                     如出于法律原因需要请求更改内容，请前往<a href="">法律帮助</a>页面。系统可能已将部分<a href="">帐号和系统信息</a>发送给
                                     Google。我们将根据自己的<a href="">隐私权政策</a>和<a href="">服务条款</a>使用您提供的信息帮助解决技术问题和改进我们的服务。
@@ -798,8 +861,7 @@ export default class Window extends React.Component {
                                     </div>
                                     <div className="flatbutton confirm"
                                          style={{color: this.props.themeColor || '#3986FF'}}
-                                         onClick={() => {
-                                         }}
+                                         onClick={this.send.bind(this)}
                                     >发送
                                     </div>
                                 </div>
@@ -831,15 +893,21 @@ export default class Window extends React.Component {
                                 focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36"
                                 fill="#FFEB3B"><path d="M3 3h18v18H3z"></path></svg>
                                 <svg focusable="false" aria-label=""
-                                 fill="#757575"
-                                 viewBox="0 0 24 24" height="36"
-                                 width="36" style={{
+                                     fill="#757575"
+                                     viewBox="0 0 24 24" height="36"
+                                     width="36" style={{
                                     left: '0px',
                                     position: 'absolute',
                                     top: '0px'
                                 }}>
-                                    <path
-                                d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path></svg></span>
+                                    {
+                                        this.state.toolBarType == 'hightlight'?
+                                            <path
+                                                d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>:
+                                            <path
+                                                d="M3 3h18v18H3z" fill="#FEEA4E"></path>
+                                    }
+                                    </svg></span>
                             </div>
                             <div className={`tool ${(this.state.toolBarType == 'black') ? 'tool-active' : ''} hide`}
                                  onClick={() => {
@@ -848,19 +916,24 @@ export default class Window extends React.Component {
                                      })
                                  }}
                             ><span
-                                style={{display: 'inline-block', position: 'relative', height: '36px', width: '36px'}}><svg
-                                focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36" fill="#000"><path
-                                d="M3 3h18v18H3z"></path></svg></span></div>
-                            <div className={`tool ${(this.state.toolBarType == 'text') ? 'tool-active' : ''} text`}
-                                 onClick={() => {
-                                     this.setState({
-                                         toolBarType: 'text',
-                                     })
-                                 }}
-                            ><span
-                                style={{display: 'inline-block', position: 'relative', height: '36px', width: '36px'}}
-                                draggable="false">A</span></div>
-                            <div className="button"><span className="flatbutton" draggable="false" onClick={this.editCancel.bind(this)}>DONE</span>
+                                style={{display: 'inline-block', position: 'relative', height: '36px', width: '36px'}}>
+                                {
+                                    this.state.toolBarType == 'black'?
+                                        <React.Fragment>
+                                        <svg focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36" fill="#000"><path d="M3 3h18v18H3z"></path></svg>
+                                        <svg focusable="false" aria-label="" fill="#757575" viewBox="0 0 24 24" height="36" width="36" style={{
+                                            left: '0px',
+                                            position: 'absolute',
+                                            top: '0px'
+                                        }}><path d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path></svg>
+                                        </React.Fragment>:
+                                    <svg
+                                    focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36" fill="#000"><path
+                                            d="M3 3h18v18H3z"></path></svg>
+                                }
+                                </span></div>
+                            <div className="button"><span className="flatbutton" draggable="false"
+                                                          onClick={this.editCancel.bind(this)}>完成</span>
                             </div>
                         </div>
                 }
@@ -868,11 +941,17 @@ export default class Window extends React.Component {
                     {
                         state.hightlightItem.map((data, k) => {
                             return (
-                                <div key={k} className="rect" style={{width: `${data.width}px`, height: `${data.height}px`, left: `${data.sx}px`, top: `${data.sy}px`}}>
+                                <div key={k} className="rect" style={{
+                                    width: `${data.width}px`,
+                                    height: `${data.height}px`,
+                                    left: `${data.sx}px`,
+                                    top: `${data.sy}px`
+                                }}>
                                     <span className="close" onClick={this.clearHightlight.bind(this, k)}>
                                         <svg viewBox="0 0 1024 1024"
                                              width="16" height="16">
-                                            <path d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
+                                            <path
+                                                d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
                                         </svg>
                                     </span>
                                 </div>
@@ -884,11 +963,17 @@ export default class Window extends React.Component {
                     {
                         state.blackItem.map((data, k) => {
                             return (
-                                <div key={k} className="rect" style={{width: `${data.width}px`, height: `${data.height}px`, left: `${data.sx}px`, top: `${data.sy}px`}}>
+                                <div key={k} className="rect" style={{
+                                    width: `${data.width}px`,
+                                    height: `${data.height}px`,
+                                    left: `${data.sx}px`,
+                                    top: `${data.sy}px`
+                                }}>
                                     <span className="close" onClick={this.clearBlack.bind(this, k)}>
                                         <svg viewBox="0 0 1024 1024"
                                              width="16" height="16">
-                                            <path d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
+                                            <path
+                                                d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
                                         </svg>
                                     </span>
                                 </div>

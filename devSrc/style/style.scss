@@ -110,8 +110,8 @@
                     align-items: center;
                     color: #999;
                     position: absolute;
-                    right: -6px;
-                    top: -6px;
+                    right: -12px;
+                    top: -12px;
                     cursor: pointer;
                     display: none;
                     user-select: none;
@@ -144,8 +144,8 @@
                     align-items: center;
                     color: #999;
                     position: absolute;
-                    right: -6px;
-                    top: -6px;
+                    right: -12px;
+                    top: -12px;
                     cursor: pointer;
                     display: none;
                     user-select: none;
@@ -154,7 +154,7 @@
         }
         .dialog{
             width: 360px;
-            min-height: 616px;
+            min-height: 443px;
             background: #FFF;
             box-shadow: rgba(0, 0, 0, 0.137255) 0px 24px 38px 3px, rgba(0, 0, 0, 0.117647) 0px 9px 46px 8px, rgba(0, 0, 0, 0.2) 0px 11px 15px -7px;
             border-radius: 2px;
@@ -375,7 +375,7 @@
             left: 50%;
             top: 60%;
             margin-left: -115px;
-            width: 288px;
+            width: 232px;
             background: #FFF;
             height: 56px;
             border-radius: 2px;
