@@ -1,44 +1,70 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Window from './window';
+import FeedbackComponent from './feedback';
 
-class GoogleFeedback extends React.Component {
+class Feedback {
+    constructor(option) {
+        this.container = option.container;
+        this.trigger = option.trigger;
+        this.send = option.send;
+        this.theme = option.theme || null;
+        this.license = option.license || '';
+        if(!this.container) {
+            console.error('missing container element');
+            return;
+        }
+        this.init();
+    }
+
+    init() {
+        ReactDOM.render(<Page
+            trigger={this.trigger}
+            send={this.send}
+            theme={this.theme}
+            license={this.license}
+        />, this.container);
+    }
+}
+
+window.Feedback = Feedback;
+
+class Page extends React.Component {
     constructor() {
         super();
         this.state = {
-            submit: false,
-            docHeight: 0,
+            open: false,
         }
     }
 
     componentDidMount() {
-        let docHeight = document.body.clientHeight ;
+        if(this.props.trigger) {
+            this.props.trigger.addEventListener('click', () => {
+                this.setState({
+                    open: true,
+                })
+            })
+        }
+    }
+
+    cancel() {
         this.setState({
-            docHeight: docHeight,
+            open: false,
         })
     }
 
     render() {
-        let state = this.state;
         return (
-            <div id="googleFeedback" style={{height: `${state.docHeight}px`}}>
+            <React.Fragment>
                 {
-                    this.state.submit?
-                        <div className="feedback-submiting-icon">
-                            <svg viewBox="0 0 40 40" style={{width: '40px', height: '40px', position: 'relative'}}>
-                                <circle cx="20" cy="20" r="18.25" fill="none" strokeWidth="3.5"
-                                        strokeMiterlimit="20"
-                                        style={{stroke: 'rgb(57, 134, 255)', strokeLnecap: 'round'}}></circle>
-                            </svg>
-                        </div>:null
+                    this.state.open?
+                        <FeedbackComponent
+                            theme={this.props.theme}
+                            cancel={this.cancel.bind(this)}
+                            send={this.props.send}
+                            license={this.props.license}
+                        />:null
                 }
-                <Window/>
-            </div>
+            </React.Fragment>
         )
     }
 }
-
-ReactDOM.render(
-    <GoogleFeedback></GoogleFeedback>,
-    document.getElementById('main')
-);

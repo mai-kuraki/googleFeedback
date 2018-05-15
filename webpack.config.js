@@ -5,7 +5,7 @@ const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const config = {
     entry: {
         app: ['babel-polyfill','./devSrc/js/app.js'],
-        feedback: ['babel-polyfill','./src/feedback.js']
+        feedback: ['babel-polyfill','./devSrc/js/feedback.js']
     },
     output: {
         path: path.resolve(__dirname, './dist'),

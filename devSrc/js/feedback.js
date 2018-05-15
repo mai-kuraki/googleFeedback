@@ -164,39 +164,12 @@ const hightLightEl = ['button', 'a', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'p',
     'caption', 'input', 'label', 'legend', 'select', 'textarea',
     'details', 'summary'];
 
-export default class Window extends React.Component {
+export default class Feedback extends React.Component {
     constructor() {
         super();
         this.state = {
+            docHeight: 0,
             device: 'pc',
-            sysInfo: {
-                origin: '',
-                browserType: '',
-                userAgent: '',
-                appName: '',
-                appVersion: '',
-                cookieEnabled: '',
-                mimeType: [],
-                platform: '',
-                screenWidth: '',
-                screenHeight: '',
-                colorDepth: '',
-                onLine: '',
-                support_localStorage: '',
-                support_sessionStorage: '',
-                support_history: '',
-                support_webSocket: '',
-                support_applicationCache: '',
-                support_webWorker: '',
-                support_canvas: '',
-                support_video: '',
-                support_audio: '',
-                support_svg: '',
-                support_css3_3d: '',
-                support_geolocation: '',
-                plugins: '',
-                javaEnabled: '',
-            },
             text: '',
             textError: '',
             shotOpen: true,
@@ -207,6 +180,34 @@ export default class Window extends React.Component {
             hightlightItem: [],
             blackItem: [],
         };
+        this.sysInfo = {
+            origin: '',
+            browserType: '',
+            userAgent: '',
+            appName: '',
+            appVersion: '',
+            cookieEnabled: '',
+            mimeType: [],
+            platform: '',
+            screenWidth: '',
+            screenHeight: '',
+            colorDepth: '',
+            onLine: '',
+            support_localStorage: '',
+            support_sessionStorage: '',
+            support_history: '',
+            support_webSocket: '',
+            support_applicationCache: '',
+            support_webWorker: '',
+            support_canvas: '',
+            support_video: '',
+            support_audio: '',
+            support_svg: '',
+            support_css3_3d: '',
+            support_geolocation: '',
+            plugins: '',
+            javaEnabled: '',
+        };
         this.move = false;
         this.eX = 0;
         this.eY = 0;
@@ -214,9 +215,12 @@ export default class Window extends React.Component {
         this.dragRect = false;
         this.startX = 0;
         this.startY = 0;
+        this.documentMouseMove = this.documentMouseMove.bind(this);
+        this.elementHelperClick = this.elementHelperClick.bind(this);
     }
 
     componentWillMount() {
+        window.Feedback = this;
         this.getDevice();
         let supportCanvas = funcs.support_canvas();
         this.setState({
@@ -233,7 +237,7 @@ export default class Window extends React.Component {
     }
 
     getSysInfo() {
-        let sysInfo = this.state.sysInfo;
+        let sysInfo = this.sysInfo;
         sysInfo.origin = window.location.href;
         sysInfo.browserType = funcs.browserType();
         sysInfo.userAgent = navigator.userAgent;
@@ -260,9 +264,7 @@ export default class Window extends React.Component {
         sysInfo.support_geolocation = funcs.support_geolocation();
         sysInfo.plugins = funcs.getPluginName();
         sysInfo.javaEnabled = navigator.javaEnabled();
-        this.setState({
-            sysInfo: sysInfo,
-        })
+        this.sysInfo = sysInfo;
     }
 
     switchCanvasVisible(visible) {
@@ -375,23 +377,35 @@ export default class Window extends React.Component {
                 this.ctx.fillStyle = 'rgba(0,0,0,.4)';
                 this.ctx.fillRect(clientX, clientY, width, height);
             }
-
         } else {
             this.elementHelper(e);
         }
     }
 
     addEventListener() {
-        document.addEventListener('mousemove', this.documentMouseMove.bind(this));
-        document.addEventListener('click', this.elementHelperClick.bind(this));
+        document.addEventListener('mousemove', this.documentMouseMove, false);
+        document.addEventListener('click', this.elementHelperClick, false);
+    }
+
+    removeEventListener() {
+        document.removeEventListener('mousemove', this.documentMouseMove, false);
+        document.removeEventListener('click', this.elementHelperClick, false);
     }
 
     componentDidMount() {
         this.initCanvas();
         this.addEventListener();
+        let docHeight = document.body.clientHeight;
+        this.setState({
+            docHeight: docHeight,
+        });
         if (this.state.shotOpen) {
             this.shotScreen();
         }
+    }
+
+    componentWillUnmount() {
+        this.removeEventListener();
     }
 
     getDevice() {
@@ -492,9 +506,9 @@ export default class Window extends React.Component {
                 clientY = e.clientY + document.documentElement.scrollTop,
                 width = this.startX - clientX,
                 height = this.startY - clientY;
-                if(Math.abs(width) < 6 || Math.abs(height) < 6) {
-                    return;
-                }
+            if (Math.abs(width) < 6 || Math.abs(height) < 6) {
+                return;
+            }
             let toolBarType = this.state.toolBarType,
                 hightlightItem = this.state.hightlightItem,
                 blackItem = this.state.blackItem,
@@ -695,6 +709,27 @@ export default class Window extends React.Component {
 
     }
 
+    recoverImgSrc(parent) {
+        let imgItem = parent.getElementsByTagName('img');
+        for (let i = 0; i < imgItem.length; i++) {
+            let feedbackorigin = imgItem[i].getAttribute('data-feedbackorigin');
+            let src = imgItem[i].getAttribute('src');
+            if(feedbackorigin) {
+                imgItem[i].src = feedbackorigin;
+                imgItem.removeAttr('data-feedbackorigin');
+                imgItem[i].setAttribute('data-feedbackBase64', src);
+            }
+        }
+    }
+
+    recoverIframe() {
+
+    }
+
+    reset() {
+        this.recoverImgSrc(document.body);
+    }
+
     shotScreen() {
         if (this.state.loading)return;
         this.loadingState(true);
@@ -722,11 +757,13 @@ export default class Window extends React.Component {
                     })
                 };
                 this.loadingState(false);
+                this.reset();
             }).catch((e) => {
                 this.setState({
                     screenshotEdit: false,
                 });
                 this.loadingState(false);
+                this.reset();
                 console.log(e)
             });
         });
@@ -760,138 +797,168 @@ export default class Window extends React.Component {
     }
 
     send() {
+        let text = this.state.text;
+        if(!text) {
+            this.setState({
+                textError: '必须添加说明',
+            });
+            return;
+        }
         this.getSysInfo();
-        setTimeout(() => {
-           console.log(this.state.sysInfo)
-        });
+        if (typeof this.props.send === 'function') {
+            let data = {
+                sysInfo: this.sysInfo,
+                text: this.state.text,
+            };
+            if(this.state.shotOpen) {
+                data.shot = this.refs.screenshotPrev.src || '';
+            }
+            this.props.send(data);
+            this.cancel();
+        }
+    }
+
+    cancel() {
+        this.props.cancel();
     }
 
     render() {
         let state = this.state,
             props = this.props;
         return (
-            <div className="feedback-window" onMouseMove={this.handleMouseMove.bind(this)}
-                 onMouseUp={this.handleMoveMouseUp.bind(this)}>
-                {
-                    !state.editMode ?
-                        <div className="dialog-mask"></div> : null
-                }
-                {
-                    !state.editMode ?
-                        <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true"
-                             style={{left: '50%', top: '50%'}}>
-                            <div className="title"
-                                 style={{background: props.themeColor || '#3986FF'}}>{props.title || '问题反馈'}</div>
-                            <div className="feedback-area">
-                                {
-                                    state.textError ?
-                                        <div className="required-tip">请输入问题描述</div> : null
-                                }
-                                <textarea placeholder="请说明您的问题或分享您的想法" ref="textarea" defaultValue={state.text}
-                                          onChange={(e) => {
-                                              this.setState({
-                                                  text: e.target.value,
-                                                  textError: '',
-                                              })
-                                          }}></textarea>
-                                <div className="shot-switch clearfix">
-                                    <div className="checkbox" onClick={this.checkboxHandle.bind(this)}>
-                                        <svg className={`checkbox-icon ${state.shotOpen ? '' : 'active'}`}
-                                             focusable="false"
-                                             aria-label="" fill="#757575" viewBox="0 0 24 24" height="24" width="24">
-                                            <path
-                                                d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path>
-                                        </svg>
-                                        <svg className={`checkbox-icon ${state.shotOpen ? 'active' : ''}`}
-                                             focusable="false"
-                                             aria-label="" fill={props.themeColor || '#3986FF'} viewBox="0 0 24 24"
-                                             height="24"
-                                             width="24">
-                                            <path
-                                                d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
-                                        </svg>
+            <div id="googleFeedback" style={{height: `${state.docHeight}px`}}>
+                <div className="feedback-window" onMouseMove={this.handleMouseMove.bind(this)}
+                     onMouseUp={this.handleMoveMouseUp.bind(this)}>
+                    {
+                        !state.editMode ?
+                            <div className="dialog-mask"></div> : null
+                    }
+                    {
+                        !state.editMode ?
+                            <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true"
+                                 style={{left: '50%', top: '50%'}}>
+                                <div className="title"
+                                     style={{background: props.theme || '#3986FF'}}>{props.title || '问题反馈'}</div>
+                                <div className="feedback-area">
+                                    {
+                                        state.textError ?
+                                            <div className="required-tip">{state.textError}</div> : null
+                                    }
+                                    <textarea placeholder="请说明您的问题或分享您的想法" ref="textarea" defaultValue={state.text}
+                                              onChange={(e) => {
+                                                  this.setState({
+                                                      text: e.target.value,
+                                                      textError: '',
+                                                  })
+                                              }}></textarea>
+                                    <div className="shot-switch clearfix">
+                                        <div className="checkbox" onClick={this.checkboxHandle.bind(this)}>
+                                            <svg className={`checkbox-icon ${state.shotOpen ? '' : 'active'}`}
+                                                 focusable="false"
+                                                 aria-label="" fill="#757575" viewBox="0 0 24 24" height="24"
+                                                 width="24">
+                                                <path
+                                                    d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path>
+                                            </svg>
+                                            <svg className={`checkbox-icon ${state.shotOpen ? 'active' : ''}`}
+                                                 focusable="false"
+                                                 aria-label="" fill={props.theme || '#3986FF'} viewBox="0 0 24 24"
+                                                 height="24"
+                                                 width="24">
+                                                <path
+                                                    d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+                                            </svg>
+                                        </div>
+                                        <label>包含截图</label>
                                     </div>
-                                    <label>包含截图</label>
-                                </div>
-                                {
-                                    state.shotOpen?
-                                        <div className="screenshot-area">
-                                            {
-                                                state.loading ?
-                                                    <div className="loading">
-                                                        <div className="loading-icon">
-                                                            <svg viewBox="0 0 40 40"
-                                                                 style={{width: '40px', height: '40px', position: 'relative'}}>
-                                                                <circle cx="20" cy="20" r="18.25" fill="none" strokeWidth="3.5"
-                                                                        strokeMiterlimit="20"
-                                                                        style={{
-                                                                            stroke: props.themeColor || 'rgb(57, 134, 255)',
-                                                                            strokeLnecap: 'round'
-                                                                        }}></circle>
-                                                            </svg>
-                                                        </div>
-                                                        <span className="loading-text">正在加载屏幕截图...</span>
-                                                    </div> : null
-                                            }
-                                            <div className="screenshot">
+                                    {
+                                        state.shotOpen ?
+                                            <div className="screenshot-area">
                                                 {
-                                                    state.screenshotEdit && !state.loading ?
-                                                        <div className="to-edit" onClick={this.toEditMode.bind(this)}>
-                                                            <div className="edit-icon">
-                                                                <svg focusable="false" aria-label="" fill="#757575"
-                                                                     viewBox="0 0 24 24" height="48" width="48">
-                                                                    <path
-                                                                        d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>
+                                                    state.loading ?
+                                                        <div className="loading">
+                                                            <div className="loading-icon">
+                                                                <svg viewBox="0 0 40 40"
+                                                                     style={{
+                                                                         width: '40px',
+                                                                         height: '40px',
+                                                                         position: 'relative'
+                                                                     }}>
+                                                                    <circle cx="20" cy="20" r="18.25" fill="none"
+                                                                            strokeWidth="3.5"
+                                                                            strokeMiterlimit="20"
+                                                                            style={{
+                                                                                stroke: props.theme || 'rgb(57, 134, 255)',
+                                                                                strokeLnecap: 'round'
+                                                                            }}></circle>
                                                                 </svg>
                                                             </div>
-                                                            <span className="edit-label">点击编辑高亮或隐藏信息</span>
+                                                            <span className="loading-text">正在加载屏幕截图...</span>
                                                         </div> : null
                                                 }
-                                                <img id="screenshotPrev" ref="screenshotPrev" src=""/>
-                                            </div>
-                                        </div>:null
-                                }
-                                <div className="legal">
-                                    如出于法律原因需要请求更改内容，请前往<a href="">法律帮助</a>页面。系统可能已将部分<a href="">帐号和系统信息</a>发送给
-                                    Google。我们将根据自己的<a href="">隐私权政策</a>和<a href="">服务条款</a>使用您提供的信息帮助解决技术问题和改进我们的服务。
-                                </div>
-                                <div className="actions">
-                                    <div className="flatbutton cancel" style={{color: '#757575'}} onClick={() => {
-                                    }}>取消
+                                                <div className="screenshot">
+                                                    {
+                                                        state.screenshotEdit && !state.loading ?
+                                                            <div className="to-edit"
+                                                                 onClick={this.toEditMode.bind(this)}>
+                                                                <div className="edit-icon">
+                                                                    <svg focusable="false" aria-label="" fill="#757575"
+                                                                         viewBox="0 0 24 24" height="48" width="48">
+                                                                        <path
+                                                                            d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>
+                                                                    </svg>
+                                                                </div>
+                                                                <span className="edit-label">点击编辑高亮或隐藏信息</span>
+                                                            </div> : null
+                                                    }
+                                                    <img id="screenshotPrev" ref="screenshotPrev" src=""/>
+                                                </div>
+                                            </div> : null
+                                    }
+                                    <div className="legal" dangerouslySetInnerHTML={{__html: this.props.license || `如出于法律原因需要请求更改内容，请前往<a href="" style="color: ${props.theme || '#3986FF'}">法律帮助</a>页面。系统可能已将部分<a href="" style="color: ${props.theme || '#3986FF'}">帐号和系统信息</a>发送给
+                                        Google。我们将根据自己的<a href="" style="color: ${props.theme || '#3986FF'}">隐私权政策</a>和<a href="" style="color: ${props.theme || '#3986FF'}">服务条款</a>使用您提供的信息帮助解决技术问题和改进我们的服务。`}}>
                                     </div>
-                                    <div className="flatbutton confirm"
-                                         style={{color: this.props.themeColor || '#3986FF'}}
-                                         onClick={this.send.bind(this)}
-                                    >发送
+                                    <div className="actions">
+                                        <div className="flatbutton cancel" style={{color: '#757575'}} onClick={this.cancel.bind(this)}>取消
+                                        </div>
+                                        <div className="flatbutton confirm"
+                                             style={{color: this.props.theme || '#3986FF'}}
+                                             onClick={this.send.bind(this)}
+                                        >发送
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div> :
-                        <div ref="toolBar" className="tool-bar clearfix">
-                            <div className="move"
-                                 onMouseDown={this.handleMoveMouseDown.bind(this)}
-                            >
-                                <svg focusable="false" aria-label="Drag" fill="#BDBDBD" height="56" width="16"
-                                     viewBox="-2 2 12 12">
-                                    <circle cx="1.5" cy="1.5" r="1.5"></circle>
-                                    <circle cx="1.5" cy="7.5" r="1.5"></circle>
-                                    <circle cx="1.5" cy="13.5" r="1.5"></circle>
-                                    <circle cx="6.5" cy="1.5" r="1.5"></circle>
-                                    <circle cx="6.5" cy="7.5" r="1.5"></circle>
-                                    <circle cx="6.5" cy="13.5" r="1.5"></circle>
-                                </svg>
-                            </div>
-                            <div
-                                className={`tool ${(this.state.toolBarType == 'hightlight') ? 'tool-active' : ''} hight-light`}
-                                onClick={() => {
-                                    this.setState({
-                                        toolBarType: 'hightlight',
-                                    })
-                                }}
-                            ><span
-                                style={{display: 'inline-block', position: 'relative', height: '36px', width: '36px'}}><svg
-                                focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36"
-                                fill="#FFEB3B"><path d="M3 3h18v18H3z"></path></svg>
+                            </div> :
+                            <div ref="toolBar" className="tool-bar clearfix">
+                                <div className="move"
+                                     onMouseDown={this.handleMoveMouseDown.bind(this)}
+                                >
+                                    <svg focusable="false" aria-label="Drag" fill="#BDBDBD" height="56" width="16"
+                                         viewBox="-2 2 12 12">
+                                        <circle cx="1.5" cy="1.5" r="1.5"></circle>
+                                        <circle cx="1.5" cy="7.5" r="1.5"></circle>
+                                        <circle cx="1.5" cy="13.5" r="1.5"></circle>
+                                        <circle cx="6.5" cy="1.5" r="1.5"></circle>
+                                        <circle cx="6.5" cy="7.5" r="1.5"></circle>
+                                        <circle cx="6.5" cy="13.5" r="1.5"></circle>
+                                    </svg>
+                                </div>
+                                <div
+                                    className={`tool ${(this.state.toolBarType == 'hightlight') ? 'tool-active' : ''} hight-light`}
+                                    onClick={() => {
+                                        this.setState({
+                                            toolBarType: 'hightlight',
+                                        })
+                                    }}
+                                ><span
+                                    style={{
+                                        display: 'inline-block',
+                                        position: 'relative',
+                                        height: '36px',
+                                        width: '36px'
+                                    }}><svg
+                                    focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36"
+                                    fill="#FFEB3B"><path d="M3 3h18v18H3z"></path></svg>
                                 <svg focusable="false" aria-label=""
                                      fill="#757575"
                                      viewBox="0 0 24 24" height="36"
@@ -901,52 +968,67 @@ export default class Window extends React.Component {
                                     top: '0px'
                                 }}>
                                     {
-                                        this.state.toolBarType == 'hightlight'?
+                                        this.state.toolBarType == 'hightlight' ?
                                             <path
-                                                d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>:
+                                                d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path> :
                                             <path
                                                 d="M3 3h18v18H3z" fill="#FEEA4E"></path>
                                     }
                                     </svg></span>
-                            </div>
-                            <div className={`tool ${(this.state.toolBarType == 'black') ? 'tool-active' : ''} hide`}
-                                 onClick={() => {
-                                     this.setState({
-                                         toolBarType: 'black',
-                                     })
-                                 }}
-                            ><span
-                                style={{display: 'inline-block', position: 'relative', height: '36px', width: '36px'}}>
+                                </div>
+                                <div className={`tool ${(this.state.toolBarType == 'black') ? 'tool-active' : ''} hide`}
+                                     onClick={() => {
+                                         this.setState({
+                                             toolBarType: 'black',
+                                         })
+                                     }}
+                                ><span
+                                    style={{
+                                        display: 'inline-block',
+                                        position: 'relative',
+                                        height: '36px',
+                                        width: '36px'
+                                    }}>
                                 {
-                                    this.state.toolBarType == 'black'?
+                                    this.state.toolBarType == 'black' ?
                                         <React.Fragment>
-                                        <svg focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36" fill="#000"><path d="M3 3h18v18H3z"></path></svg>
-                                        <svg focusable="false" aria-label="" fill="#757575" viewBox="0 0 24 24" height="36" width="36" style={{
-                                            left: '0px',
-                                            position: 'absolute',
-                                            top: '0px'
-                                        }}><path d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path></svg>
-                                        </React.Fragment>:
-                                    <svg
-                                    focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36" fill="#000"><path
-                                            d="M3 3h18v18H3z"></path></svg>
+                                            <svg focusable="false" aria-label="" viewBox="0 0 24 24" height="36"
+                                                 width="36" fill="#000">
+                                                <path d="M3 3h18v18H3z"></path>
+                                            </svg>
+                                            <svg focusable="false" aria-label="" fill="#757575" viewBox="0 0 24 24"
+                                                 height="36" width="36" style={{
+                                                left: '0px',
+                                                position: 'absolute',
+                                                top: '0px'
+                                            }}>
+                                                <path
+                                                    d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>
+                                            </svg>
+                                        </React.Fragment> :
+                                        <svg
+                                            focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36"
+                                            fill="#000">
+                                            <path
+                                                d="M3 3h18v18H3z"></path>
+                                        </svg>
                                 }
                                 </span></div>
-                            <div className="button"><span className="flatbutton" draggable="false"
-                                                          onClick={this.editCancel.bind(this)}>完成</span>
+                                <div className="button"><span className="flatbutton" draggable="false"
+                                                              onClick={this.editCancel.bind(this)}>完成</span>
+                                </div>
                             </div>
-                        </div>
-                }
-                <div ref="hightlight" className="hightlight-area">
-                    {
-                        state.hightlightItem.map((data, k) => {
-                            return (
-                                <div key={k} className="rect" style={{
-                                    width: `${data.width}px`,
-                                    height: `${data.height}px`,
-                                    left: `${data.sx}px`,
-                                    top: `${data.sy}px`
-                                }}>
+                    }
+                    <div ref="hightlight" className="hightlight-area">
+                        {
+                            state.hightlightItem.map((data, k) => {
+                                return (
+                                    <div key={k} className="rect" style={{
+                                        width: `${data.width}px`,
+                                        height: `${data.height}px`,
+                                        left: `${data.sx}px`,
+                                        top: `${data.sy}px`
+                                    }}>
                                     <span className="close" onClick={this.clearHightlight.bind(this, k)}>
                                         <svg viewBox="0 0 1024 1024"
                                              width="16" height="16">
@@ -954,21 +1036,21 @@ export default class Window extends React.Component {
                                                 d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
                                         </svg>
                                     </span>
-                                </div>
-                            )
-                        })
-                    }
-                </div>
-                <div ref="black" className="black-area">
-                    {
-                        state.blackItem.map((data, k) => {
-                            return (
-                                <div key={k} className="rect" style={{
-                                    width: `${data.width}px`,
-                                    height: `${data.height}px`,
-                                    left: `${data.sx}px`,
-                                    top: `${data.sy}px`
-                                }}>
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                    <div ref="black" className="black-area">
+                        {
+                            state.blackItem.map((data, k) => {
+                                return (
+                                    <div key={k} className="rect" style={{
+                                        width: `${data.width}px`,
+                                        height: `${data.height}px`,
+                                        left: `${data.sx}px`,
+                                        top: `${data.sy}px`
+                                    }}>
                                     <span className="close" onClick={this.clearBlack.bind(this, k)}>
                                         <svg viewBox="0 0 1024 1024"
                                              width="16" height="16">
@@ -976,14 +1058,15 @@ export default class Window extends React.Component {
                                                 d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
                                         </svg>
                                     </span>
-                                </div>
-                            )
-                        })
-                    }
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                    <canvas ref="canvas" id="feedbackCanvas"
+                            onMouseDown={this.canvasMouseDown.bind(this)}
+                    ></canvas>
                 </div>
-                <canvas ref="canvas" id="feedbackCanvas"
-                        onMouseDown={this.canvasMouseDown.bind(this)}
-                ></canvas>
             </div>
         )
     }
