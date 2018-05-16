@@ -3,7 +3,6 @@
     "main": "dist/index.js",
     "version": "1.0.0",
     "description": "Google-style feedback component",
-    "private": true,
     "repository": {
         "type": "git",
         "url": "https://github.com/mai-kuraki/googleFeedback.git"
