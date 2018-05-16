@@ -712,18 +712,20 @@ export default class Feedback extends React.Component {
         }
         for(let i = 0; i < videoItem.length; i ++) {
             let video = videoItem[0];
-            let w = $(video).width();
-            let h = $(video).height();
-            $(video).after('<canvas width="'+ w +'" height="'+ h +'"></canvas>');
-            let canvas = $(video).next('canvas').css({display: 'none'});
-            let ctx = canvas.get(0).getContext('2d');
-            ctx.drawImage(video, 0, 0, w, h);
-            try {
-                video.style.backgroundImage = "url("+ canvas.get(0).toDataURL('image/png') +")";
-            }catch (e) {
-                console.log(e)
-            }finally {
-                canvas.remove();
+            if(!video.style.backgroundImage) {
+                let w = $(video).width();
+                let h = $(video).height();
+                $(video).after('<canvas width="'+ w +'" height="'+ h +'"></canvas>');
+                let canvas = $(video).next('canvas').css({display: 'none'});
+                let ctx = canvas.get(0).getContext('2d');
+                ctx.drawImage(video, 0, 0, w, h);
+                try {
+                    video.style.backgroundImage = "url("+ canvas.get(0).toDataURL('image/png') +")";
+                }catch (e) {
+                    console.log(e)
+                }finally {
+                    canvas.remove();
+                }
             }
         }
         resolve();
