@@ -17,13 +17,13 @@
         "start": "node ./app.js"
     },
     "dependencies": {
+    },
+    "devDependencies": {
         "body-parser": "~1.15.2",
         "cookie-parser": "~1.4.3",
         "debug": "~2.2.0",
         "ejs": "^2.6.1",
-        "express": "~4.14.0"
-    },
-    "devDependencies": {
+        "express": "~4.14.0",
         "babel-core": "^6.26.0",
         "babel-loader": "^7.1.2",
         "babel-polyfill": "^6.26.0",
