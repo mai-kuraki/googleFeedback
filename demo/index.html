@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <link type="text/css" rel="stylesheet" href="/style.css"/>
+    <!--<link type="text/css" rel="stylesheet" href="/style.css"/>-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <style>
         * {
             padding: 0px;
@@ -29,7 +30,7 @@
             padding: 1px;
             margin: 20px auto;
         }
-        .wrap img{
+        .wrap img,.wrap video{
             width: 100%;
             margin: 12px auto;
             display: block;
@@ -72,19 +73,21 @@
     <p>
         <img src="http://cms-bucket.nosdn.127.net/catchpic/e/e5/e5c7ee5b770953b16e9afb8592116c41.jpg?imageView&thumbnail=550x0">
     </p>
-    <p><iframe src="https://www.baidu.com" width="100%" height="300px"></iframe></p>
+    <p><video src="/video.mp4" controls/></p>
     <p>文中模仿林建华的语气，声称为校庆纪念大会当天的鸿浩、菁菁学子等错误读音道歉，同时承认第一份致歉信《致同学们》中有病句、还有标点使用不规范等。</p>
     <p>此后，文章还提出三点思考，包括校长如何应对“事务性纷扰”，名校校长是否应该具备最基本的“底线人文素养”、大学精神和北大精神怎么不断续被弘扬等。</p>
     <p>有细心网友指出，二次道歉信疑似公众号为了蹭热点所为，因为标题之下是显眼的合作微信、QQ等字样，还有加关注的推送。</p>
     <p>北大新闻发言人蒋朗朗告诉记者，这篇文章内容是假的，请公众不要相信。同时北大已将此信息反馈给相关部门，截至记者发稿时，文章内容已被删除。</p>
 </div>
 <button id="btn">反馈</button>
-<script src="/bundle_app.js"></script>
+<script src="/feedback.js"></script>
 <script>
     new Feedback({
         container: document.getElementById('main'),
         trigger: document.getElementById('btn'),
         theme: '',
+        allowCORS: ['http://127.0.0.1:5000'],
+        proxy: 'http://127.0.0.1:5000/feedbackApi/cors',
         license: `如出于法律原因需要请求更改内容，请前往
                 <a href="" >法律帮助</a>
                 页面。系统可能已将部分
@@ -95,7 +98,7 @@
         send: function (data) {
             console.log(data)
         }
-    })
+    });
 </script>
 </body>
 </html>

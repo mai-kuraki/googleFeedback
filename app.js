@@ -4,7 +4,7 @@ const app = express();
 const route = require('./route');
 const bodyParser = require('body-parser');
 const port = 5000;
-app.set('views', __dirname + '/test');
+app.set('views', __dirname + '/demo');
 app.engine('html', require('ejs').renderFile);
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use(bodyParser.json({limit: '30mb'}));

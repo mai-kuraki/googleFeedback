@@ -1,7 +1,19 @@
 {
-    "name": "googlefeedback",
-    "version": "0.0.0",
+    "name": "react-google-feedback",
+    "main": "dist/index.js",
+    "version": "1.0.0",
+    "description": "Google-style feedback component",
     "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mai-kuraki/googleFeedback.git"
+    },
+    "keywords": ["google", "feedback", "react", "component", "material", "shot", "screen"],
+    "author": {
+        "name": "maikuraki",
+        "email": "1530850503@qq.com",
+        "url": "https://github.com/mai-kuraki/googleFeedback.git"
+    },
     "scripts": {
         "start": "node ./app.js"
     },
@@ -20,12 +32,15 @@
         "babel-preset-react": "^6.24.1",
         "babel-preset-stage-0": "^6.24.1",
         "bundle-loader": "^0.5.5",
-        "dom-to-image": "^2.6.0",
+        "css-loader": "^0.28.11",
         "extract-text-webpack-plugin": "^3.0.2",
         "html2canvas": "^1.0.0-alpha.12",
         "n-zepto": "^1.2.0",
+        "node-sass": "^4.9.0",
         "react": "^16.2.0",
         "react-dom": "^16.2.0",
+        "sass-loader": "^7.0.1",
+        "style-loader": "^0.21.0",
         "uglifyjs-webpack-plugin": "^1.2.5",
         "webpack": "^3.10.0"
     }

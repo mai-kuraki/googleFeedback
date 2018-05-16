@@ -1,7 +1,8 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import html2canvas from 'html2canvas';
 import $ from 'n-zepto';
-
+import '../style/style.scss';
 const funcs = {
     browserType: () => {
         let userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
@@ -154,21 +155,13 @@ const funcs = {
         return !!(window.history && history.pushState);
     },
 };
-//允许跨域的站点;
-const fbCrossOrigin = [];
-
-const host = 'http://127.0.0.1:5000';
-
-const hightLightEl = ['button', 'a', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'p',
-    'i', 'strong', 'small', 'sub', 'sup', 'b', 'time', 'img',
-    'caption', 'input', 'label', 'legend', 'select', 'textarea',
-    'details', 'summary'];
-
+const hightLightEl = ['button', 'a', 'span','em','i', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'strong', 'small', 'sub', 'sup', 'b', 'time', 'img', 'video', 'input', 'label', 'select', 'textarea', 'article', 'summary', 'section'];
 export default class Feedback extends React.Component {
     constructor() {
         super();
         this.state = {
             docHeight: 0,
+            winHeight: 0,
             device: 'pc',
             text: '',
             textError: '',
@@ -179,6 +172,8 @@ export default class Feedback extends React.Component {
             toolBarType: 'hightlight',
             hightlightItem: [],
             blackItem: [],
+            snackbar: false,
+            snackbarMsg: '',
         };
         this.sysInfo = {
             origin: '',
@@ -217,17 +212,15 @@ export default class Feedback extends React.Component {
         this.startY = 0;
         this.documentMouseMove = this.documentMouseMove.bind(this);
         this.elementHelperClick = this.elementHelperClick.bind(this);
+        this.windowResize = this.windowResize.bind(this);
     }
 
     componentWillMount() {
-        window.Feedback = this;
         this.getDevice();
-        let supportCanvas = funcs.support_canvas();
         this.setState({
-            supportCanvas: supportCanvas,
             openStatus: this.props.open,
         });
-        if (this.props.open) {
+        if(this.props.open) {
             setTimeout(() => {
                 if (!this.refs.textarea.value) {
                     this.refs.textarea.focus();
@@ -382,29 +375,44 @@ export default class Feedback extends React.Component {
         }
     }
 
+    windowResize() {
+        this.calcHeight();
+    }
+
     addEventListener() {
         document.addEventListener('mousemove', this.documentMouseMove, false);
         document.addEventListener('click', this.elementHelperClick, false);
+        window.addEventListener('resize', this.windowResize, false);
     }
 
     removeEventListener() {
         document.removeEventListener('mousemove', this.documentMouseMove, false);
         document.removeEventListener('click', this.elementHelperClick, false);
+        window.removeEventListener('resize', this.windowResize, false);
     }
 
     componentDidMount() {
         this.initCanvas();
         this.addEventListener();
-        let docHeight = document.body.clientHeight;
-        this.setState({
-            docHeight: docHeight,
-        });
+        this.calcHeight();
         if (this.state.shotOpen) {
             this.shotScreen();
         }
     }
 
+    calcHeight() {
+        let docHeight = document.body.clientHeight;
+        let windowHeight = window.innerHeight;
+        this.setState({
+            docHeight: docHeight,
+            winHeight: windowHeight,
+        });
+    }
+
     componentWillUnmount() {
+        if(this.timer) {
+            clearTimeout(this.timer);
+        }
         this.removeEventListener();
     }
 
@@ -419,7 +427,7 @@ export default class Feedback extends React.Component {
             device = 'mobile';
             this.setState({
                 device: device,
-            })
+            });
         }
     }
 
@@ -574,6 +582,10 @@ export default class Feedback extends React.Component {
     }
 
     handleCorsImg(parent, resolve, reject) {
+        if(!this.props.proxy) {
+            resolve();
+            return;
+        }
         let origin = location.origin;
         let pItem = [];
         let imgItem = parent.getElementsByTagName('img');
@@ -587,7 +599,7 @@ export default class Feedback extends React.Component {
             pItem[i] = new Promise((resolve2, reject2) => {
                 if (src && !reg.test(src) && src.indexOf(origin) == -1 && src.indexOf('data:image/png;base64,') == -1 && this.isVisible(imgItem[i])) {
                     let inList = false;
-                    (fbCrossOrigin || []).map((d, k) => {
+                    (this.props.allowCORS || []).map((d, k) => {
                         if (d && src.indexOf(d) > -1) {
                             inList = true;
                         }
@@ -599,7 +611,7 @@ export default class Feedback extends React.Component {
                             imgItem[i].setAttribute('src', imgItem[i].getAttribute('data-feedbackBase64'));
                             resolve2();
                         } else {
-                            fetch(`${host}/feedbackApi/cors`, {
+                            fetch(this.props.proxy, {
                                 method: 'POST',
                                 headers: {
                                     'Accept': 'application/json',
@@ -616,6 +628,9 @@ export default class Feedback extends React.Component {
                                 } else {
                                     resolve2();
                                 }
+                            }).catch((e) => {
+                                console.error(e)
+                                resolve2();
                             });
                         }
                     }
@@ -643,26 +658,6 @@ export default class Feedback extends React.Component {
         for (let i = 0; i < iframeItem.length; i++) {
             let iframe = iframeItem[i];
             pItem.push(new Promise((presolve, preject) => {
-                let displayType = $(iframe).css('display'),
-                    position = $(iframe).css('position'),
-                    margin = $(iframe).css('margin'),
-                    padding = $(iframe).css('padding'),
-                    boxSizing = $(iframe).css('box-sizing'),
-                    left = $(iframe).css('left'),
-                    right = $(iframe).css('right'),
-                    top = $(iframe).css('top'),
-                    bottom = $(iframe).css('bottom');
-                if (!displayType || displayType == 'inline') {
-                    displayType = 'inline-block';
-                }
-                // console.log(position)
-                // console.log(margin)
-                // console.log(padding)
-                // console.log(boxSizing)
-                // console.log(left)
-                // console.log(right)
-                // console.log(top)
-                // console.log(bottom)
                 let doc;
                 let isCors = false;
                 try {
@@ -709,6 +704,31 @@ export default class Feedback extends React.Component {
 
     }
 
+    handleVideo(parent, resolve, reject) {
+        let videoItem = parent.getElementsByTagName('video');
+        if(videoItem == 0) {
+            resolve();
+            return;
+        }
+        for(let i = 0; i < videoItem.length; i ++) {
+            let video = videoItem[0];
+            let w = $(video).width();
+            let h = $(video).height();
+            $(video).after('<canvas width="'+ w +'" height="'+ h +'"></canvas>');
+            let canvas = $(video).next('canvas').css({display: 'none'});
+            let ctx = canvas.get(0).getContext('2d');
+            ctx.drawImage(video, 0, 0, w, h);
+            try {
+                video.style.backgroundImage = "url("+ canvas.get(0).toDataURL('image/png') +")";
+            }catch (e) {
+                console.log(e)
+            }finally {
+                canvas.remove();
+            }
+        }
+        resolve();
+    }
+
     recoverImgSrc(parent) {
         let imgItem = parent.getElementsByTagName('img');
         for (let i = 0; i < imgItem.length; i++) {
@@ -716,18 +736,32 @@ export default class Feedback extends React.Component {
             let src = imgItem[i].getAttribute('src');
             if(feedbackorigin) {
                 imgItem[i].src = feedbackorigin;
-                imgItem.removeAttr('data-feedbackorigin');
+                imgItem[i].removeAttribute('data-feedbackorigin');
                 imgItem[i].setAttribute('data-feedbackBase64', src);
             }
         }
     }
 
-    recoverIframe() {
-
+    recoverIframe(parent) {
+        let iframeItem = parent.getElementsByTagName('iframe');
+        for (let i = 0; i < iframeItem.length; i++) {
+            let iframe = iframeItem[i];
+            let doc;
+            let isCors = false;
+            try {
+                doc = iframe.contentWindow.document.body;
+            } catch (error) {
+                isCors = true;
+            }
+            if (!isCors) {
+                this.recoverPage(doc);
+            }
+        }
     }
 
-    reset() {
-        this.recoverImgSrc(document.body);
+    recoverPage(parent) {
+        this.recoverImgSrc(parent);
+        this.recoverIframe(parent);
     }
 
     shotScreen() {
@@ -738,11 +772,13 @@ export default class Feedback extends React.Component {
         let imgPromise = new Promise((resolve, reject) => {
             this.handleCorsImg(document.body, resolve, reject);
         });
-
+        let videoPromise = new Promise((resolve, reject) => {
+            this.handleVideo(document.body, resolve, reject);
+        });
         let iframePromsie = new Promise((resolve, reject) => {
             this.handleIframe(document.body, resolve, reject);
         });
-        Promise.all([imgPromise, iframePromsie]).then(() => {
+        Promise.all([imgPromise, videoPromise, iframePromsie]).then(() => {
             html2canvas(document.body, {
                 width: window.innerWidth,
                 height: window.innerHeight,
@@ -757,13 +793,13 @@ export default class Feedback extends React.Component {
                     })
                 };
                 this.loadingState(false);
-                this.reset();
+                this.recoverPage(document.body);
             }).catch((e) => {
                 this.setState({
                     screenshotEdit: false,
                 });
                 this.loadingState(false);
-                this.reset();
+                this.recoverPage(document.body);
                 console.log(e)
             });
         });
@@ -796,12 +832,33 @@ export default class Feedback extends React.Component {
         this.startY = e.clientY + document.documentElement.scrollTop;
     }
 
+    snackbar(msg) {
+        if(this.timer) {
+            clearTimeout(this.timer);
+        }
+        this.setState({
+            snackbar: true,
+            snackbarMsg: msg || '',
+        });
+        this.timer = setTimeout(() => {
+            this.setState({
+                snackbar: false,
+                snackbarMsg: '',
+            });
+        }, 1500);
+    }
+
     send() {
+        if(this.state.loading) {
+            this.snackbar('正在截图中...');
+            return;
+        }
         let text = this.state.text;
         if(!text) {
             this.setState({
                 textError: '必须添加说明',
             });
+            this.refs.textarea.focus();
             return;
         }
         this.getSysInfo();
@@ -826,139 +883,141 @@ export default class Feedback extends React.Component {
         let state = this.state,
             props = this.props;
         return (
-            <div id="googleFeedback" style={{height: `${state.docHeight}px`}}>
-                <div className="feedback-window" onMouseMove={this.handleMouseMove.bind(this)}
-                     onMouseUp={this.handleMoveMouseUp.bind(this)}>
-                    {
-                        !state.editMode ?
-                            <div className="dialog-mask"></div> : null
-                    }
-                    {
-                        !state.editMode ?
-                            <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true"
-                                 style={{left: '50%', top: '50%'}}>
-                                <div className="title"
-                                     style={{background: props.theme || '#3986FF'}}>{props.title || '问题反馈'}</div>
-                                <div className="feedback-area">
-                                    {
-                                        state.textError ?
-                                            <div className="required-tip">{state.textError}</div> : null
-                                    }
-                                    <textarea placeholder="请说明您的问题或分享您的想法" ref="textarea" defaultValue={state.text}
-                                              onChange={(e) => {
-                                                  this.setState({
-                                                      text: e.target.value,
-                                                      textError: '',
-                                                  })
-                                              }}></textarea>
-                                    <div className="shot-switch clearfix">
-                                        <div className="checkbox" onClick={this.checkboxHandle.bind(this)}>
-                                            <svg className={`checkbox-icon ${state.shotOpen ? '' : 'active'}`}
-                                                 focusable="false"
-                                                 aria-label="" fill="#757575" viewBox="0 0 24 24" height="24"
-                                                 width="24">
-                                                <path
-                                                    d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path>
-                                            </svg>
-                                            <svg className={`checkbox-icon ${state.shotOpen ? 'active' : ''}`}
-                                                 focusable="false"
-                                                 aria-label="" fill={props.theme || '#3986FF'} viewBox="0 0 24 24"
-                                                 height="24"
-                                                 width="24">
-                                                <path
-                                                    d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
-                                            </svg>
-                                        </div>
-                                        <label>包含截图</label>
-                                    </div>
-                                    {
-                                        state.shotOpen ?
-                                            <div className="screenshot-area">
-                                                {
-                                                    state.loading ?
-                                                        <div className="loading">
-                                                            <div className="loading-icon">
-                                                                <svg viewBox="0 0 40 40"
-                                                                     style={{
-                                                                         width: '40px',
-                                                                         height: '40px',
-                                                                         position: 'relative'
-                                                                     }}>
-                                                                    <circle cx="20" cy="20" r="18.25" fill="none"
-                                                                            strokeWidth="3.5"
-                                                                            strokeMiterlimit="20"
-                                                                            style={{
-                                                                                stroke: props.theme || 'rgb(57, 134, 255)',
-                                                                                strokeLnecap: 'round'
-                                                                            }}></circle>
-                                                                </svg>
-                                                            </div>
-                                                            <span className="loading-text">正在加载屏幕截图...</span>
-                                                        </div> : null
-                                                }
-                                                <div className="screenshot">
-                                                    {
-                                                        state.screenshotEdit && !state.loading ?
-                                                            <div className="to-edit"
-                                                                 onClick={this.toEditMode.bind(this)}>
-                                                                <div className="edit-icon">
-                                                                    <svg focusable="false" aria-label="" fill="#757575"
-                                                                         viewBox="0 0 24 24" height="48" width="48">
-                                                                        <path
-                                                                            d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>
-                                                                    </svg>
-                                                                </div>
-                                                                <span className="edit-label">点击编辑高亮或隐藏信息</span>
-                                                            </div> : null
-                                                    }
-                                                    <img id="screenshotPrev" ref="screenshotPrev" src=""/>
+            <div id="googleFeedback" style={{height: `${state.docHeight}px`}} onMouseMove={this.handleMouseMove.bind(this)}
+                 onMouseUp={this.handleMoveMouseUp.bind(this)}>
+                {
+                    state.device == 'pc'?
+                        <div className="feedback-window">
+                            {
+                                !state.editMode ?
+                                    <div className="dialog-mask"></div> : null
+                            }
+                            {
+                                !state.editMode ?
+                                    <div id="feedbackDialog" className="dialog" data-html2canvas-ignore="true"
+                                         style={{left: '50%', top: '50%'}}>
+                                        <div className="title"
+                                             style={{background: props.theme || '#3986FF'}}>{props.title || '问题反馈'}</div>
+                                        <div className="feedback-area">
+                                            {
+                                                state.textError ?
+                                                    <div className="required-tip">{state.textError}</div> : null
+                                            }
+                                            <textarea placeholder="请说明您的问题或分享您的想法" ref="textarea" defaultValue={state.text}
+                                                      onChange={(e) => {
+                                                          this.setState({
+                                                              text: e.target.value,
+                                                              textError: '',
+                                                          })
+                                                      }}></textarea>
+                                            <div className="shot-switch clearfix">
+                                                <div className="checkbox" onClick={this.checkboxHandle.bind(this)}>
+                                                    <svg className={`checkbox-icon ${state.shotOpen ? '' : 'active'}`}
+                                                         focusable="false"
+                                                         aria-label="" fill="#757575" viewBox="0 0 24 24" height="24"
+                                                         width="24">
+                                                        <path
+                                                            d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path>
+                                                    </svg>
+                                                    <svg className={`checkbox-icon ${state.shotOpen ? 'active' : ''}`}
+                                                         focusable="false"
+                                                         aria-label="" fill={props.theme || '#3986FF'} viewBox="0 0 24 24"
+                                                         height="24"
+                                                         width="24">
+                                                        <path
+                                                            d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+                                                    </svg>
                                                 </div>
-                                            </div> : null
-                                    }
-                                    <div className="legal" dangerouslySetInnerHTML={{__html: this.props.license || `如出于法律原因需要请求更改内容，请前往<a href="" style="color: ${props.theme || '#3986FF'}">法律帮助</a>页面。系统可能已将部分<a href="" style="color: ${props.theme || '#3986FF'}">帐号和系统信息</a>发送给
+                                                <label>包含截图</label>
+                                            </div>
+                                            {
+                                                state.shotOpen ?
+                                                    <div className="screenshot-area">
+                                                        {
+                                                            state.loading ?
+                                                                <div className="loading">
+                                                                    <div className="loading-icon">
+                                                                        <svg viewBox="0 0 40 40"
+                                                                             style={{
+                                                                                 width: '40px',
+                                                                                 height: '40px',
+                                                                                 position: 'relative'
+                                                                             }}>
+                                                                            <circle cx="20" cy="20" r="18.25" fill="none"
+                                                                                    strokeWidth="3.5"
+                                                                                    strokeMiterlimit="20"
+                                                                                    style={{
+                                                                                        stroke: props.theme || 'rgb(57, 134, 255)',
+                                                                                        strokeLnecap: 'round'
+                                                                                    }}></circle>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <span className="loading-text">正在加载屏幕截图...</span>
+                                                                </div> : null
+                                                        }
+                                                        <div className="screenshot">
+                                                            {
+                                                                state.screenshotEdit && !state.loading ?
+                                                                    <div className="to-edit"
+                                                                         onClick={this.toEditMode.bind(this)}>
+                                                                        <div className="edit-icon">
+                                                                            <svg focusable="false" aria-label="" fill="#757575"
+                                                                                 viewBox="0 0 24 24" height="48" width="48">
+                                                                                <path
+                                                                                    d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span className="edit-label">点击编辑高亮或隐藏信息</span>
+                                                                    </div> : null
+                                                            }
+                                                            <img id="screenshotPrev" ref="screenshotPrev" src=""/>
+                                                        </div>
+                                                    </div> : null
+                                            }
+                                            <div className="legal" dangerouslySetInnerHTML={{__html: this.props.license || `如出于法律原因需要请求更改内容，请前往<a href="" style="color: ${props.theme || '#3986FF'}">法律帮助</a>页面。系统可能已将部分<a href="" style="color: ${props.theme || '#3986FF'}">帐号和系统信息</a>发送给
                                         Google。我们将根据自己的<a href="" style="color: ${props.theme || '#3986FF'}">隐私权政策</a>和<a href="" style="color: ${props.theme || '#3986FF'}">服务条款</a>使用您提供的信息帮助解决技术问题和改进我们的服务。`}}>
-                                    </div>
-                                    <div className="actions">
-                                        <div className="flatbutton cancel" style={{color: '#757575'}} onClick={this.cancel.bind(this)}>取消
+                                            </div>
+                                            <div className="actions">
+                                                <div className="flatbutton cancel" style={{color: '#757575'}} onClick={this.cancel.bind(this)}>取消
+                                                </div>
+                                                <div className="flatbutton confirm"
+                                                     style={{color: this.props.theme || '#3986FF'}}
+                                                     onClick={this.send.bind(this)}
+                                                >发送
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flatbutton confirm"
-                                             style={{color: this.props.theme || '#3986FF'}}
-                                             onClick={this.send.bind(this)}
-                                        >发送
+                                    </div> :
+                                    <div ref="toolBar" className="tool-bar clearfix">
+                                        <div className="move"
+                                             onMouseDown={this.handleMoveMouseDown.bind(this)}
+                                        >
+                                            <svg focusable="false" aria-label="Drag" fill="#BDBDBD" height="56" width="16"
+                                                 viewBox="-2 2 12 12">
+                                                <circle cx="1.5" cy="1.5" r="1.5"></circle>
+                                                <circle cx="1.5" cy="7.5" r="1.5"></circle>
+                                                <circle cx="1.5" cy="13.5" r="1.5"></circle>
+                                                <circle cx="6.5" cy="1.5" r="1.5"></circle>
+                                                <circle cx="6.5" cy="7.5" r="1.5"></circle>
+                                                <circle cx="6.5" cy="13.5" r="1.5"></circle>
+                                            </svg>
                                         </div>
-                                    </div>
-                                </div>
-                            </div> :
-                            <div ref="toolBar" className="tool-bar clearfix">
-                                <div className="move"
-                                     onMouseDown={this.handleMoveMouseDown.bind(this)}
-                                >
-                                    <svg focusable="false" aria-label="Drag" fill="#BDBDBD" height="56" width="16"
-                                         viewBox="-2 2 12 12">
-                                        <circle cx="1.5" cy="1.5" r="1.5"></circle>
-                                        <circle cx="1.5" cy="7.5" r="1.5"></circle>
-                                        <circle cx="1.5" cy="13.5" r="1.5"></circle>
-                                        <circle cx="6.5" cy="1.5" r="1.5"></circle>
-                                        <circle cx="6.5" cy="7.5" r="1.5"></circle>
-                                        <circle cx="6.5" cy="13.5" r="1.5"></circle>
-                                    </svg>
-                                </div>
-                                <div
-                                    className={`tool ${(this.state.toolBarType == 'hightlight') ? 'tool-active' : ''} hight-light`}
-                                    onClick={() => {
-                                        this.setState({
-                                            toolBarType: 'hightlight',
-                                        })
-                                    }}
-                                ><span
-                                    style={{
-                                        display: 'inline-block',
-                                        position: 'relative',
-                                        height: '36px',
-                                        width: '36px'
-                                    }}><svg
-                                    focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36"
-                                    fill="#FFEB3B"><path d="M3 3h18v18H3z"></path></svg>
+                                        <div
+                                            className={`tool ${(this.state.toolBarType == 'hightlight') ? 'tool-active' : ''} hight-light`}
+                                            onClick={() => {
+                                                this.setState({
+                                                    toolBarType: 'hightlight',
+                                                })
+                                            }}
+                                        ><span
+                                            style={{
+                                                display: 'inline-block',
+                                                position: 'relative',
+                                                height: '36px',
+                                                width: '36px'
+                                            }}><svg
+                                            focusable="false" aria-label="" viewBox="0 0 24 24" height="36" width="36"
+                                            fill="#FFEB3B"><path d="M3 3h18v18H3z"></path></svg>
                                 <svg focusable="false" aria-label=""
                                      fill="#757575"
                                      viewBox="0 0 24 24" height="36"
@@ -975,20 +1034,20 @@ export default class Feedback extends React.Component {
                                                 d="M3 3h18v18H3z" fill="#FEEA4E"></path>
                                     }
                                     </svg></span>
-                                </div>
-                                <div className={`tool ${(this.state.toolBarType == 'black') ? 'tool-active' : ''} hide`}
-                                     onClick={() => {
-                                         this.setState({
-                                             toolBarType: 'black',
-                                         })
-                                     }}
-                                ><span
-                                    style={{
-                                        display: 'inline-block',
-                                        position: 'relative',
-                                        height: '36px',
-                                        width: '36px'
-                                    }}>
+                                        </div>
+                                        <div className={`tool ${(this.state.toolBarType == 'black') ? 'tool-active' : ''} hide`}
+                                             onClick={() => {
+                                                 this.setState({
+                                                     toolBarType: 'black',
+                                                 })
+                                             }}
+                                        ><span
+                                            style={{
+                                                display: 'inline-block',
+                                                position: 'relative',
+                                                height: '36px',
+                                                width: '36px'
+                                            }}>
                                 {
                                     this.state.toolBarType == 'black' ?
                                         <React.Fragment>
@@ -1014,21 +1073,21 @@ export default class Feedback extends React.Component {
                                         </svg>
                                 }
                                 </span></div>
-                                <div className="button"><span className="flatbutton" draggable="false"
-                                                              onClick={this.editCancel.bind(this)}>完成</span>
-                                </div>
-                            </div>
-                    }
-                    <div ref="hightlight" className="hightlight-area">
-                        {
-                            state.hightlightItem.map((data, k) => {
-                                return (
-                                    <div key={k} className="rect" style={{
-                                        width: `${data.width}px`,
-                                        height: `${data.height}px`,
-                                        left: `${data.sx}px`,
-                                        top: `${data.sy}px`
-                                    }}>
+                                        <div className="button"><span className="flatbutton" draggable="false"
+                                                                      onClick={this.editCancel.bind(this)}>完成</span>
+                                        </div>
+                                    </div>
+                            }
+                            <div ref="hightlight" className="hightlight-area">
+                                {
+                                    state.hightlightItem.map((data, k) => {
+                                        return (
+                                            <div key={k} className="rect" style={{
+                                                width: `${data.width}px`,
+                                                height: `${data.height}px`,
+                                                left: `${data.sx}px`,
+                                                top: `${data.sy}px`
+                                            }}>
                                     <span className="close" onClick={this.clearHightlight.bind(this, k)}>
                                         <svg viewBox="0 0 1024 1024"
                                              width="16" height="16">
@@ -1036,21 +1095,21 @@ export default class Feedback extends React.Component {
                                                 d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
                                         </svg>
                                     </span>
-                                    </div>
-                                )
-                            })
-                        }
-                    </div>
-                    <div ref="black" className="black-area">
-                        {
-                            state.blackItem.map((data, k) => {
-                                return (
-                                    <div key={k} className="rect" style={{
-                                        width: `${data.width}px`,
-                                        height: `${data.height}px`,
-                                        left: `${data.sx}px`,
-                                        top: `${data.sy}px`
-                                    }}>
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </div>
+                            <div ref="black" className="black-area">
+                                {
+                                    state.blackItem.map((data, k) => {
+                                        return (
+                                            <div key={k} className="rect" style={{
+                                                width: `${data.width}px`,
+                                                height: `${data.height}px`,
+                                                left: `${data.sx}px`,
+                                                top: `${data.sy}px`
+                                            }}>
                                     <span className="close" onClick={this.clearBlack.bind(this, k)}>
                                         <svg viewBox="0 0 1024 1024"
                                              width="16" height="16">
@@ -1058,16 +1117,98 @@ export default class Feedback extends React.Component {
                                                 d="M896 224l-96-96-288 288-288-288-96 96 288 288-288 288 96 96 288-288 288 288 96-96-288-288 288-288z"/>
                                         </svg>
                                     </span>
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </div>
+                        </div>:
+                        <div className="mobile-feedBack-window" data-html2canvas-ignore="true" style={{height: `${state.winHeight}px`}}>
+                            <div className="header">
+                                <div className="left">
+                                    <span className="close btn" onClick={this.cancel.bind(this)}>
+                                        <svg focusable="false" aria-label="CANCEL" fill="white" viewBox="0 0 24 24" height="24" width="24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+                                    </span>
+                                    <label>发送反馈</label>
+                                </div>
+                                <span className="send btn" onClick={this.send.bind(this)}>
+                                    <svg focusable="false" aria-label="SEND" fill="white" viewBox="0 0 24 24" height="24" width="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                                </span>
+                            </div>
+                            <div className="main">
+                                <div className="feedback-area">
+                                    {
+                                        state.textError?
+                                            <div className="required-tip">{state.textError}</div>:null
+                                    }
+                                    <textarea placeholder="请说明您的问题或分享您的想法" ref="textarea" defaultValue={state.text} onChange={(e) => {
+                                        this.setState({
+                                            text: e.target.value,
+                                            textError: '',
+                                        })
+                                    }}></textarea>
+                                </div>
+                                <div className="screenshot">
+                                    <div className="shot-switch clearfix">
+                                        <div className="checkbox" onClick={this.checkboxHandle.bind(this)}>
+                                            <svg className={`checkbox-icon ${state.shotOpen ? '' : 'active'}`} focusable="false"
+                                                 aria-label="" fill="#757575" viewBox="0 0 24 24" height="24" width="24">
+                                                <path
+                                                    d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path>
+                                            </svg>
+                                            <svg className={`checkbox-icon ${state.shotOpen ? 'active' : ''}`} focusable="false"
+                                                 aria-label="" fill={props.theme || '#3986FF'} viewBox="0 0 24 24" height="24"
+                                                 width="24">
+                                                <path
+                                                    d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+                                            </svg>
+                                        </div>
+                                        <label>包含截图</label>
                                     </div>
-                                )
-                            })
-                        }
-                    </div>
-                    <canvas ref="canvas" id="feedbackCanvas"
-                            onMouseDown={this.canvasMouseDown.bind(this)}
-                    ></canvas>
-                </div>
+                                    {
+                                        state.shotOpen ?
+                                            <div className="screenshot-area">
+                                                {
+                                                    state.loading?
+                                                        <div className="loading-icon">
+                                                            <svg viewBox="0 0 40 40" style={{width: '40px', height: '40px', position: 'relative'}}>
+                                                                <circle cx="20" cy="20" r="18.25" fill="none" strokeWidth="3.5"
+                                                                        strokeMiterlimit="20"
+                                                                        style={{stroke: props.theme || 'rgb(57, 134, 255)', strokeLnecap: 'round'}}></circle>
+                                                            </svg>
+                                                        </div> : null
+                                                }
+
+                                                <div className="screenshot">
+                                                    <img id="screenshotPrev" ref="screenshotPrev" src=""/>
+                                                </div>
+                                            </div>
+                                            :
+                                            null
+                                    }
+                                </div>
+                            </div>
+                            <div className="legal" dangerouslySetInnerHTML={{__html: this.props.license || `如出于法律原因需要请求更改内容，请前往<a href="" style="color: ${props.theme || '#3986FF'}">法律帮助</a>页面。系统可能已将部分<a href="" style="color: ${props.theme || '#3986FF'}">帐号和系统信息</a>发送给
+                                        Google。我们将根据自己的<a href="" style="color: ${props.theme || '#3986FF'}">隐私权政策</a>和<a href="" style="color: ${props.theme || '#3986FF'}">服务条款</a>使用您提供的信息帮助解决技术问题和改进我们的服务。`}}>
+                            </div>
+                        </div>
+                }
+                <canvas ref="canvas" id="feedbackCanvas"
+                        onMouseDown={this.canvasMouseDown.bind(this)}
+                ></canvas>
+                {
+                    state.snackbar?<div className="snackbar">{state.snackbarMsg}</div>:null
+                }
             </div>
         )
     }
 }
+
+Feedback.propTypes = {
+    theme: PropTypes.string,
+    cancel: PropTypes.func.isRequired,
+    send: PropTypes.func.isRequired,
+    license: PropTypes.string,
+    allowCORS: PropTypes.array,
+    proxy: PropTypes.string
+};

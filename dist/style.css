@@ -1,7 +1,4 @@
 @charset "UTF-8";
-.iframe_tmp {
-  overflow: hidden; }
-
 #googleFeedback {
   width: 100%;
   height: 100%;
@@ -61,14 +58,6 @@
       left: 0px;
       top: 0px;
       cursor: default; }
-    #googleFeedback .feedback-window #feedbackCanvas {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      left: 0px;
-      top: 0px;
-      z-index: 997;
-      cursor: crosshair; }
     #googleFeedback .feedback-window .hightlight-area {
       width: 0px;
       height: 0px;
@@ -409,5 +398,177 @@
           background: #FFF; }
           #googleFeedback .feedback-window .tool-bar .button .flatbutton:hover {
             background: #EEE; }
+  #googleFeedback .mobile-feedBack-window {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+    background: #FFF;
+    z-index: 998;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column; }
+    #googleFeedback .mobile-feedBack-window .header {
+      width: 100%;
+      height: 50px;
+      background: #3986FF;
+      line-height: 50px;
+      color: #FFF;
+      display: flex;
+      justify-content: space-between; }
+      #googleFeedback .mobile-feedBack-window .header .left {
+        display: flex; }
+      #googleFeedback .mobile-feedBack-window .header .btn {
+        width: 50px;
+        height: 50px;
+        padding-top: 13px;
+        display: flex;
+        justify-content: center; }
+      #googleFeedback .mobile-feedBack-window .header label {
+        font-size: 16px;
+        margin-left: 3vw; }
+    #googleFeedback .mobile-feedBack-window .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column; }
+    #googleFeedback .mobile-feedBack-window .feedback-area {
+      width: 100%;
+      min-height: 196px;
+      padding: 18px 16px 12px 18px;
+      position: relative;
+      flex: 1; }
+      #googleFeedback .mobile-feedBack-window .feedback-area textarea {
+        display: block;
+        width: 100%;
+        height: 100%;
+        resize: none;
+        outline: none;
+        border: none;
+        font-size: 14px; }
+        #googleFeedback .mobile-feedBack-window .feedback-area textarea::-webkit-scrollbar {
+          width: 5px;
+          height: 5px;
+          background-color: #f0f0f0; }
+        #googleFeedback .mobile-feedBack-window .feedback-area textarea::-webkit-scrollbar-track {
+          background-color: #f0f0f0; }
+        #googleFeedback .mobile-feedBack-window .feedback-area textarea::-webkit-scrollbar-thumb {
+          background-color: #aaa; }
+      #googleFeedback .mobile-feedBack-window .feedback-area .required-tip {
+        position: absolute;
+        width: calc(100% - 36px);
+        left: 16px;
+        top: 50px;
+        height: 32px;
+        line-height: 32px;
+        border-top: 2px solid #db4437;
+        color: #db4437;
+        font-size: 12px; }
+    #googleFeedback .mobile-feedBack-window .screenshot {
+      width: 90%;
+      min-height: 64px;
+      margin: 0px auto;
+      margin-bottom: 16px;
+      background: #FAFAFA;
+      border-radius: 3px;
+      display: flex;
+      align-items: center; }
+    #googleFeedback .mobile-feedBack-window .shot-switch {
+      flex: 1;
+      height: 48px;
+      padding: 8px 16px 8px 8px;
+      line-height: 32px;
+      background: #FAFAFA; }
+      #googleFeedback .mobile-feedBack-window .shot-switch .checkbox {
+        width: 32px;
+        height: 32px;
+        float: left;
+        position: relative;
+        cursor: pointer; }
+        #googleFeedback .mobile-feedBack-window .shot-switch .checkbox .checkbox-icon {
+          position: absolute;
+          width: 24px;
+          height: 24px;
+          left: 4px;
+          top: 4px;
+          transform: scale(0);
+          opacity: 0;
+          transition: all 400ms ease-out; }
+        #googleFeedback .mobile-feedBack-window .shot-switch .checkbox .active {
+          opacity: 1;
+          transform: scale(1); }
+      #googleFeedback .mobile-feedBack-window .shot-switch label {
+        float: left;
+        color: #000;
+        font-size: 14px; }
+    #googleFeedback .mobile-feedBack-window .screenshot-area {
+      width: 64px;
+      height: 64px;
+      background: #EEE;
+      position: relative; }
+      #googleFeedback .mobile-feedBack-window .screenshot-area .loading-icon {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-left: -20px;
+        margin-top: -20px;
+        width: 40px;
+        height: 40px;
+        z-index: 999;
+        animation: feedbackLoading 10s linear 0ms infinite; }
+        #googleFeedback .mobile-feedBack-window .screenshot-area .loading-icon circle {
+          animation: feedbackLoadingCircle 2000ms ease-in-out 0ms infinite; }
+      #googleFeedback .mobile-feedBack-window .screenshot-area .screenshot {
+        width: 100%;
+        height: 100%;
+        background: #EEE;
+        display: flex;
+        position: relative;
+        cursor: pointer; }
+        #googleFeedback .mobile-feedBack-window .screenshot-area .screenshot img {
+          max-height: 100%;
+          max-width: 100%;
+          margin: auto; }
+    #googleFeedback .mobile-feedBack-window .legal {
+      width: 100%;
+      min-height: 72px;
+      color: #757575;
+      font-size: 12px;
+      padding: 16px 20px;
+      line-height: 1.8;
+      background: #FAFAFA; }
+      #googleFeedback .mobile-feedBack-window .legal a {
+        color: #3986FF;
+        font-size: 12px; }
+    #googleFeedback .mobile-feedBack-window .canvas-area {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0px;
+      top: 0px; }
+  #googleFeedback .snackbar {
+    min-width: 16vw;
+    padding: 0px 10px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    color: #FFF;
+    font-size: 14px;
+    position: fixed;
+    left: 50%;
+    top: 30%;
+    transform: translate(-50%, -50%);
+    border-radius: 3px;
+    z-index: 1000; }
+  #googleFeedback #feedbackCanvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index: 997;
+    cursor: crosshair; }
 
 /*# sourceMappingURL=style.css.map */

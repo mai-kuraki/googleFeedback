@@ -4,18 +4,29 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const config = {
     entry: {
-        app: ['babel-polyfill','./devSrc/js/app.js'],
-        feedback: ['babel-polyfill','./devSrc/js/feedback.js']
+        feedback: ['babel-polyfill','./src/js/app.js'],
+        index: ['babel-polyfill','./src/js/feedback.js'],
     },
     output: {
         path: path.resolve(__dirname, './dist'),
-        filename: 'bundle_[name].js'
+        filename: '[name].js'
     },
     resolve: {
         extensions: ['.js', '.jsx']
     },
     module: {
-        loaders: [{
+        loaders: [
+            {
+                test: /\.scss$/,
+                use: [{
+                    loader: "style-loader"
+                }, {
+                    loader: "css-loader"
+                }, {
+                    loader: "sass-loader"
+                }]
+            },
+            {
                 test: /\.js$/,
                 loader: 'babel-loader',
                 query: {
@@ -29,27 +40,14 @@ const config = {
             }
         ]
     },
-    externals: [
-        (() => {
-          var IGNORES = [
-            'electron'
-          ];
-          return (context, request, callback) => {
-            if (IGNORES.indexOf(request) >= 0) {
-              return callback(null, "require('" + request + "')");
-            }
-            return callback();
-          };
-        })()
-      ],
     plugins: [
-        new ExtractTextPlugin("bundle_style.css"),
-        // new webpack.DefinePlugin({
-        //     'process.env': {
-        //         'NODE_ENV': JSON.stringify('production')
-        //     }
-        // }),
-        // new UglifyJSPlugin()
+        // new ExtractTextPlugin("bundle_style.css"),
+        new webpack.DefinePlugin({
+            'process.env': {
+                'NODE_ENV': JSON.stringify('production')
+            }
+        }),
+        new UglifyJSPlugin()
     ]
 };
 
