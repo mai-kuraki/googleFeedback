@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "html2canvas": "^1.0.0-alpha.12",
-        "n-zepto": "^1.2.0",
+        "n-zepto": "^1.2.0"
     },
     "devDependencies": {
         "body-parser": "~1.15.2",
