@@ -12,7 +12,7 @@ router.all('*', (req, res, next) => {
         next();
     }
 });
-router.get('/test', (req, res) => {
+router.get('/demo', (req, res) => {
     res.render('index.html');
 });
 router.get('/iframe', (req, res) => {

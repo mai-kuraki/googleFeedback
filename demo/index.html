@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <!--<link type="text/css" rel="stylesheet" href="/style.css"/>-->
+    <title>DEMO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <style>
         * {
@@ -11,12 +10,10 @@
             margin: 0px;
             box-sizing: border-box;
         }
-
         html {
             width: 100%;
             height: 100%;
         }
-
         body {
             width: 100%;
             min-height: 100%;
@@ -25,28 +22,35 @@
             overflow-y: auto;
             padding: 1px;
         }
-        .wrap{
+        .wrap {
             width: 600px;
             padding: 1px;
             margin: 20px auto;
         }
-        .wrap img,.wrap video{
+        .wrap img, .wrap video {
             width: 100%;
             margin: 12px auto;
             display: block;
         }
-        .wrap p{
+        .wrap p {
             width: 100%;
             line-height: 2;
             font-size: 14px;
             color: #666;
             margin: 5px 0px;
         }
-        .wrap h3{
+        .wrap iframe {
+            width: 100%;
+            height: 400px;
+            border: none;
+            margin: 5px 0px;
+        }
+        .wrap h3 {
             margin: 30px 0px;
             text-align: center;
+            font-size: 24px;
         }
-        #btn{
+        #btn {
             width: 50px;
             height: 50px;
             position: fixed;
@@ -61,29 +65,40 @@
             border: none;
             outline: none;
         }
+        @media screen and (max-width: 780px) {
+            .wrap {
+                width: 100%;
+                padding: 1px 20px;
+                margin: 20px auto;
+            }
+            #btn{
+                right: 20px;
+                bottom: 20px;
+            }
+            .wrap h3 {
+                text-align: left;
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
 <body>
-<div id="main"></div>
-<div class="wrap">
-    <h3>北大校长为校庆读错字二次道歉?北大:非林建华所写</h3>
-    <p>今天，一封名为《北大校长的二次道歉》的文章在朋友圈火了，刚刚，北京日报记者从北京大学宣传部确认，这封信内容不实，并非林建华所写。</p>
-    <p><iframe src="/iframe" width="100%" height="300px"></iframe></p>
-    <p>这封信由一个名为“今日评法”的公众号发送，截至下午3时，阅读量接近10万+。</p>
-    <p>
-        <img src="http://cms-bucket.nosdn.127.net/catchpic/e/e5/e5c7ee5b770953b16e9afb8592116c41.jpg?imageView&thumbnail=550x0">
-    </p>
-    <p><video src="/video.mp4" controls/></p>
-    <p>文中模仿林建华的语气，声称为校庆纪念大会当天的鸿浩、菁菁学子等错误读音道歉，同时承认第一份致歉信《致同学们》中有病句、还有标点使用不规范等。</p>
-    <p>此后，文章还提出三点思考，包括校长如何应对“事务性纷扰”，名校校长是否应该具备最基本的“底线人文素养”、大学精神和北大精神怎么不断续被弘扬等。</p>
-    <p>有细心网友指出，二次道歉信疑似公众号为了蹭热点所为，因为标题之下是显眼的合作微信、QQ等字样，还有加关注的推送。</p>
-    <p>北大新闻发言人蒋朗朗告诉记者，这篇文章内容是假的，请公众不要相信。同时北大已将此信息反馈给相关部门，截至记者发稿时，文章内容已被删除。</p>
-</div>
+<div id="feedback"></div>
 <button id="btn">反馈</button>
+<div class="wrap">
+    <h3>霉霉申请并获得保护令 不给任何跟踪狂粉丝机会</h3>
+    <p><img src="http://n.sinaimg.cn/ent/transform/320/w630h490/20180517/1-a0-harvfhu5623316.jpg"></p>
+    <p>新浪娱乐讯 5月17日消息，据外媒报道，泰勒·斯威夫特（Taylor Swift）不给跟踪自己的疯狂歌迷任何机会，哪怕他已经被捕。TMZ消息，霉霉向法官申请并如愿获得保护令。</p>
+    <p>本周三，斯威夫特在洛杉矶县申请对朱琉斯·桑德洛克（Julius Sandrock）的限制令，后者于上个月在她的一处寓所因为跟踪重罪被捕。</p>
+    <p>当时霉霉贝弗利山府邸的保安发现门外形迹可疑的桑德洛克叫来警察，从他的车上警方发现了实弹、乳胶手套、绳索和多个不同类型的面具。警察说，朱琉斯·桑德洛克戴着面具和手套，试图闯入霉霉的家。他告诉警察自己患有强迫症、双相情感障碍、严重抑郁症和躁狂发作。他说他最近刚刚离婚，是斯威夫特的歌帮助他熬过了难关。他解释说自己是杀人狂，在车里放着面具和手套是为了方便取戴。他还为车里的子弹道歉，说他忘记收拾了。警察称桑德洛克在科罗拉多因为枪械相关罪名被判缓刑，现在还处于临时枪支限制期内。</p>
+    <p><iframe src="/iframe"></iframe></p>
+    <p>泰勒·斯威夫特获得的对桑德洛克的暂时限制令，有效期一直到6月的法庭听证会。在此之前，桑德洛克必须远离她和她的任何物业、她的演唱会和公开露面500里之外。</p>
+    <p>据悉朱琉斯·桑德洛克已经获释，霉霉和她的团队并不清楚他的行踪。</p>
+</div>
 <script src="/googlefeedback.js"></script>
 <script>
     new Feedback({
-        container: document.getElementById('main'),
+        container: document.getElementById('feedback'),
         trigger: document.getElementById('btn'),
         theme: '',
         allowCORS: ['http://127.0.0.1:5000'],

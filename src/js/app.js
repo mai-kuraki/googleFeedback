@@ -33,7 +33,7 @@ class Page extends React.Component {
     constructor() {
         super();
         this.state = {
-            open: true,
+            open: false,
         }
     }
 
