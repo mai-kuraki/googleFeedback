@@ -2,6 +2,7 @@
 
 ![](https://user-gold-cdn.xitu.io/2018/5/17/1636cec3652b9860?w=420&h=270&f=gif&s=3401375)
 ![](https://user-gold-cdn.xitu.io/2018/5/17/1636cec56d528280?w=255&h=420&f=gif&s=1070950)
+[demo演示](http://39.105.103.128/feedback/demo)
 ### 1.安装：
 使用npm
 ```
