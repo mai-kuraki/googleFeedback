@@ -22,8 +22,6 @@ var _nZepto = require('n-zepto');
 
 var _nZepto2 = _interopRequireDefault(_nZepto);
 
-require('../style/style.css');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -188,8 +186,8 @@ var Feedback = function (_React$Component) {
         var _this = _possibleConstructorReturn(this, (Feedback.__proto__ || Object.getPrototypeOf(Feedback)).call(this));
 
         _this.state = {
-            docHeight: 0,
-            winHeight: 0,
+            docHeight: document.body.clientHeight,
+            winHeight: window.innerHeight,
             device: 'pc',
             text: '',
             textError: '',
@@ -435,9 +433,9 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'componentDidMount',
         value: function componentDidMount() {
+            this.calcHeight();
             this.initCanvas();
             this.addEventListener();
-            this.calcHeight();
             if (this.state.shotOpen) {
                 this.shotScreen();
             }
@@ -447,6 +445,9 @@ var Feedback = function (_React$Component) {
         value: function calcHeight() {
             var docHeight = document.body.clientHeight;
             var windowHeight = window.innerHeight;
+            if (docHeight < windowHeight) {
+                docHeight = windowHeight;
+            }
             this.setState({
                 docHeight: docHeight,
                 winHeight: windowHeight
@@ -485,6 +486,9 @@ var Feedback = function (_React$Component) {
             }
             var docWidth = document.body.clientWidth,
                 docHeight = document.body.clientHeight;
+            if (docHeight < window.innerHeight) {
+                docHeight = window.innerHeight;
+            }
             canvas.width = docWidth;
             canvas.height = docHeight;
             canvas.style.width = docWidth;

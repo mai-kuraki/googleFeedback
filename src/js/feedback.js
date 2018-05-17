@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import html2canvas from 'html2canvas';
 import $ from 'n-zepto';
-import '../style/style.css';
 const funcs = {
     browserType: () => {
         let userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
@@ -160,8 +159,8 @@ export default class Feedback extends React.Component {
     constructor() {
         super();
         this.state = {
-            docHeight: 0,
-            winHeight: 0,
+            docHeight: document.body.clientHeight,
+            winHeight: window.innerHeight,
             device: 'pc',
             text: '',
             textError: '',
@@ -392,9 +391,9 @@ export default class Feedback extends React.Component {
     }
 
     componentDidMount() {
+        this.calcHeight();
         this.initCanvas();
         this.addEventListener();
-        this.calcHeight();
         if (this.state.shotOpen) {
             this.shotScreen();
         }
@@ -403,6 +402,9 @@ export default class Feedback extends React.Component {
     calcHeight() {
         let docHeight = document.body.clientHeight;
         let windowHeight = window.innerHeight;
+        if(docHeight < windowHeight) {
+            docHeight = windowHeight;
+        }
         this.setState({
             docHeight: docHeight,
             winHeight: windowHeight,
@@ -438,6 +440,9 @@ export default class Feedback extends React.Component {
         }
         let docWidth = document.body.clientWidth,
             docHeight = document.body.clientHeight;
+        if(docHeight < window.innerHeight) {
+            docHeight = window.innerHeight;
+        }
         canvas.width = docWidth;
         canvas.height = docHeight;
         canvas.style.width = docWidth;

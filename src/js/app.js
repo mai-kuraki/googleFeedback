@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import FeedbackComponent from './feedback';
+import '../../dist/style.css';
 
 class Feedback {
     constructor(option) {
@@ -32,7 +33,7 @@ class Page extends React.Component {
     constructor() {
         super();
         this.state = {
-            open: false,
+            open: true,
         }
     }
 

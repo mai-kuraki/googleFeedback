@@ -4,7 +4,7 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const config = {
     entry: {
-        feedback: ['babel-polyfill','./src/js/app.js'],
+        googlefeedback: ['babel-polyfill','./src/js/app.js'],
     },
     output: {
         path: path.resolve(__dirname, './dist'),
@@ -29,7 +29,7 @@ const config = {
                 query: {
                     presets: ['es2015', 'react', 'stage-0']
                 },
-                // exclude: /node_modules/,
+                exclude: /node_modules/,
             },
             {
                 test: /\.(gif|jpg|png|woff|svg|eot|ttf)\??.*$/,
@@ -38,13 +38,13 @@ const config = {
         ]
     },
     plugins: [
-        // new ExtractTextPlugin("bundle_style.css"),
-        // new webpack.DefinePlugin({
-        //     'process.env': {
-        //         'NODE_ENV': JSON.stringify('production')
-        //     }
-        // }),
-        // new UglifyJSPlugin()
+        new ExtractTextPlugin("bundle_style.css"),
+        new webpack.DefinePlugin({
+            'process.env': {
+                'NODE_ENV': JSON.stringify('production')
+            }
+        }),
+        new UglifyJSPlugin()
     ]
 };
 
