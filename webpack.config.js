@@ -29,7 +29,7 @@ const config = {
                 query: {
                     presets: ['es2015', 'react', 'stage-0']
                 },
-                exclude: /node_modules/,
+                // exclude: /node_modules/,
             },
             {
                 test: /\.(gif|jpg|png|woff|svg|eot|ttf)\??.*$/,
