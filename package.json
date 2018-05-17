@@ -21,14 +21,14 @@
         "url": "https://github.com/mai-kuraki/googleFeedback.git"
     },
     "scripts": {
-        "start": "node ./app.js"
+        "start": "node ./app.js",
+        "babel": "babel"
     },
     "dependencies": {
         "html2canvas": "^1.0.0-alpha.12",
         "n-zepto": "^1.2.0"
     },
     "devDependencies": {
-        "babel-cli": "^6.26.0",
         "babel-core": "^6.26.0",
         "babel-loader": "^7.1.2",
         "babel-polyfill": "^6.26.0",

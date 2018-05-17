@@ -16,6 +16,9 @@ app.get('/demo', (req, res) => {
 app.get('/iframe', (req, res) => {
     res.render('iframe.html');
 });
+app.get('*', (req, res) => {
+    res.json({code: 404});
+});
 app.listen(port, () => {
     console.log(`server running @ http://localhost:${port}`);
 });

@@ -640,18 +640,6 @@ var Feedback = function (_React$Component) {
             this.eY = newEY;
         }
     }, {
-        key: 'isVisible',
-        value: function isVisible(el) {
-            var visible = true;
-            if ((0, _nZepto2.default)(el).css('display') == 'none') {
-                visible = false;
-            }
-            if ((0, _nZepto2.default)(el).css('visibility') == 'hidden') {
-                visible = false;
-            }
-            return visible;
-        }
-    }, {
         key: 'handleVideo',
         value: function handleVideo(parent, resolve, reject) {
             var videoItem = parent.getElementsByTagName('video');

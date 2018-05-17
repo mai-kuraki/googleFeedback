@@ -575,17 +575,6 @@ export default class Feedback extends React.Component {
         this.eY = newEY;
     }
 
-    isVisible(el) {
-        let visible = true;
-        if ($(el).css('display') == 'none') {
-            visible = false;
-        }
-        if ($(el).css('visibility') == 'hidden') {
-            visible = false;
-        }
-        return visible;
-    }
-
     handleVideo(parent, resolve, reject) {
         let videoItem = parent.getElementsByTagName('video');
         if(videoItem == 0) {
