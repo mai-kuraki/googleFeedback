@@ -1,7 +1,7 @@
 {
     "name": "react-google-feedback",
     "main": "dist/npm/feedback.js",
-    "version": "1.0.4",
+    "version": "1.0.0",
     "description": "Google-style feedback component",
     "repository": {
         "type": "git",
@@ -11,9 +11,9 @@
         "google",
         "feedback",
         "react",
-        "component",
         "material",
-        "screenshot"
+        "screenshot",
+        "hightlight"
     ],
     "author": {
         "name": "maikuraki",
