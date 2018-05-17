@@ -1,5 +1,5 @@
 {
-    "name": "react-google-feedback",
+    "name": "react-googlefeedback",
     "main": "dist/npm/feedback.js",
     "version": "1.0.0",
     "description": "Google-style feedback component",
