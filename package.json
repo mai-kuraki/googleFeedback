@@ -1,7 +1,7 @@
 {
     "name": "react-googlefeedback",
     "main": "dist/npm/feedback.js",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Google-style feedback component",
     "repository": {
         "type": "git",
@@ -43,6 +43,9 @@
         "ejs": "^2.6.1",
         "express": "~4.14.0",
         "extract-text-webpack-plugin": "^3.0.2",
+        "html2canvas-proxy": "^1.0.0",
+        "install": "^0.11.0",
+        "npm": "^6.0.1",
         "react": "^16.2.0",
         "react-dom": "^16.2.0",
         "style-loader": "^0.21.0",

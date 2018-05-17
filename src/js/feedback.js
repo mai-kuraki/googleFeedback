@@ -275,8 +275,8 @@ export default class Feedback extends React.Component {
         if (el && hightLightEl.indexOf(el.nodeName.toLocaleLowerCase()) > -1) {
             let rect = el.getBoundingClientRect();
             let rectInfo = {
-                sx: rect.left + document.documentElement.scrollLeft,
-                sy: rect.top + document.documentElement.scrollTop,
+                sx: rect.left + (document.documentElement.scrollLeft + document.body.scrollLeft),
+                sy: rect.top + (document.documentElement.scrollTop + document.body.scrollTop),
                 width: rect.width,
                 height: rect.height
             };
@@ -351,8 +351,8 @@ export default class Feedback extends React.Component {
                 this.dragRect = true;
             }
             let toolBarType = this.state.toolBarType;
-            let clientX = e.clientX + document.documentElement.scrollLeft,
-                clientY = e.clientY + document.documentElement.scrollTop,
+            let clientX = e.clientX + (document.documentElement.scrollLeft + document.body.scrollLeft),
+                clientY = e.clientY + (document.documentElement.scrollTop + document.body.scrollTop),
                 width = this.startX - clientX,
                 height = this.startY - clientY;
             this.initCanvas();
@@ -515,8 +515,8 @@ export default class Feedback extends React.Component {
         this.move = false;
         this.canvasMD = false;
         if (this.dragRect) {
-            let clientX = e.clientX + document.documentElement.scrollLeft,
-                clientY = e.clientY + document.documentElement.scrollTop,
+            let clientX = e.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft),
+                clientY = e.clientY + (document.documentElement.scrollTop || document.body.scrollTop),
                 width = this.startX - clientX,
                 height = this.startY - clientY;
             if (Math.abs(width) < 6 || Math.abs(height) < 6) {
@@ -586,129 +586,6 @@ export default class Feedback extends React.Component {
         return visible;
     }
 
-    handleCorsImg(parent, resolve, reject) {
-        if(!this.props.proxy) {
-            resolve();
-            return;
-        }
-        let origin = location.origin;
-        let pItem = [];
-        let imgItem = parent.getElementsByTagName('img');
-        if (imgItem.length == 0) {
-            resolve();
-            return;
-        }
-        let reg = /^(\/|\.)/;
-        for (let i = 0; i < imgItem.length; i++) {
-            let src = imgItem[i].src;
-            pItem[i] = new Promise((resolve2, reject2) => {
-                if (src && !reg.test(src) && src.indexOf(origin) == -1 && src.indexOf('data:image/png;base64,') == -1 && this.isVisible(imgItem[i])) {
-                    let inList = false;
-                    (this.props.allowCORS || []).map((d, k) => {
-                        if (d && src.indexOf(d) > -1) {
-                            inList = true;
-                        }
-                    });
-                    if (inList) {
-                        resolve2();
-                    } else {
-                        if (imgItem[i].getAttribute('data-feedbackBase64')) {
-                            imgItem[i].setAttribute('src', imgItem[i].getAttribute('data-feedbackBase64'));
-                            resolve2();
-                        } else {
-                            fetch(this.props.proxy, {
-                                method: 'POST',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({url: src})
-                            }).then((res) => {
-                                return res.json();
-                            }).then(data => {
-                                if (data.code == 200) {
-                                    imgItem[i].setAttribute('data-feedbackOrigin', src);
-                                    imgItem[i].setAttribute('src', 'data:image/png;base64,' + data.img);
-                                    resolve2();
-                                } else {
-                                    resolve2();
-                                }
-                            }).catch((e) => {
-                                console.error(e)
-                                resolve2();
-                            });
-                        }
-                    }
-                } else {
-                    resolve2();
-                }
-            });
-        }
-        if (pItem.length > 0) {
-            Promise.all(pItem).then(() => {
-                resolve();
-            })
-        } else {
-            resolve();
-        }
-    }
-
-    handleIframe(parent, resolve, reject) {
-        let iframeItem = parent.getElementsByTagName('iframe');
-        if (iframeItem.length == 0) {
-            resolve();
-            return;
-        }
-        let pItem = [];
-        for (let i = 0; i < iframeItem.length; i++) {
-            let iframe = iframeItem[i];
-            pItem.push(new Promise((presolve, preject) => {
-                let doc;
-                let isCors = false;
-                try {
-                    doc = iframe.contentWindow.document.body;
-                } catch (error) {
-                    isCors = true;
-                }
-                if (!isCors) {
-                    let shoted = iframe.getAttribute('data-shoted');
-                    if (shoted == 'yes') {
-                        presolve();
-                        return;
-                    }
-                    let imgPromise = new Promise((resolve2, reject2) => {
-                        if (this.isVisible(iframe)) {
-                            this.handleCorsImg(doc, resolve2, reject2);
-                        } else {
-                            resolve2();
-                        }
-                    });
-
-                    let iframePromise = new Promise((resolve3, reject3) => {
-                        if (this.isVisible(iframe)) {
-                            this.handleIframe(doc, resolve3, reject3);
-                        } else {
-                            resolve3();
-                        }
-                    });
-                    Promise.all([imgPromise, iframePromise]).then(() => {
-                        presolve();
-                    });
-                } else {
-                    resolve();
-                }
-            }))
-        }
-        if (pItem.length > 0) {
-            Promise.all(pItem).then(() => {
-                resolve();
-            })
-        } else {
-            resolve();
-        }
-
-    }
-
     handleVideo(parent, resolve, reject) {
         let videoItem = parent.getElementsByTagName('video');
         if(videoItem == 0) {
@@ -736,61 +613,21 @@ export default class Feedback extends React.Component {
         resolve();
     }
 
-    recoverImgSrc(parent) {
-        let imgItem = parent.getElementsByTagName('img');
-        for (let i = 0; i < imgItem.length; i++) {
-            let feedbackorigin = imgItem[i].getAttribute('data-feedbackorigin');
-            let src = imgItem[i].getAttribute('src');
-            if(feedbackorigin) {
-                imgItem[i].src = feedbackorigin;
-                imgItem[i].removeAttribute('data-feedbackorigin');
-                imgItem[i].setAttribute('data-feedbackBase64', src);
-            }
-        }
-    }
-
-    recoverIframe(parent) {
-        let iframeItem = parent.getElementsByTagName('iframe');
-        for (let i = 0; i < iframeItem.length; i++) {
-            let iframe = iframeItem[i];
-            let doc;
-            let isCors = false;
-            try {
-                doc = iframe.contentWindow.document.body;
-            } catch (error) {
-                isCors = true;
-            }
-            if (!isCors) {
-                this.recoverPage(doc);
-            }
-        }
-    }
-
-    recoverPage(parent) {
-        this.recoverImgSrc(parent);
-        this.recoverIframe(parent);
-    }
-
     shotScreen() {
         if (this.state.loading)return;
         this.loadingState(true);
         let hightlightItem = this.state.hightlightItem;
         this.switchCanvasVisible(hightlightItem.length > 0);
-        let imgPromise = new Promise((resolve, reject) => {
-            this.handleCorsImg(document.body, resolve, reject);
-        });
         let videoPromise = new Promise((resolve, reject) => {
             this.handleVideo(document.body, resolve, reject);
         });
-        let iframePromsie = new Promise((resolve, reject) => {
-            this.handleIframe(document.body, resolve, reject);
-        });
-        Promise.all([imgPromise, videoPromise, iframePromsie]).then(() => {
+        Promise.all([videoPromise]).then(() => {
             html2canvas(document.body, {
+                proxy: this.props.proxy || '',
                 width: window.innerWidth,
                 height: window.innerHeight,
-                x: document.documentElement.scrollLeft,
-                y: document.documentElement.scrollTop,
+                x: document.documentElement.scrollLeft || document.body.scrollLeft,
+                y: document.documentElement.scrollTop || document.body.scrollTop,
             }).then((canvas) => {
                 let src = canvas.toDataURL('image/png');
                 this.refs.screenshotPrev.src = src;
@@ -800,13 +637,11 @@ export default class Feedback extends React.Component {
                     })
                 };
                 this.loadingState(false);
-                this.recoverPage(document.body);
             }).catch((e) => {
                 this.setState({
                     screenshotEdit: false,
                 });
                 this.loadingState(false);
-                this.recoverPage(document.body);
                 console.log(e)
             });
         });
@@ -835,8 +670,8 @@ export default class Feedback extends React.Component {
 
     canvasMouseDown(e) {
         this.canvasMD = true;
-        this.startX = e.clientX + document.documentElement.scrollLeft;
-        this.startY = e.clientY + document.documentElement.scrollTop;
+        this.startX = e.clientX + (document.documentElement.scrollLeft + document.body.scrollLeft);
+        this.startY = e.clientY + (document.documentElement.scrollTop + document.body.scrollTop);
     }
 
     snackbar(msg) {
@@ -1216,6 +1051,5 @@ Feedback.propTypes = {
     cancel: PropTypes.func.isRequired,
     send: PropTypes.func.isRequired,
     license: PropTypes.string,
-    allowCORS: PropTypes.array,
     proxy: PropTypes.string
 };

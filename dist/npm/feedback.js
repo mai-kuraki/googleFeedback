@@ -310,8 +310,8 @@ var Feedback = function (_React$Component) {
             if (el && hightLightEl.indexOf(el.nodeName.toLocaleLowerCase()) > -1) {
                 var rect = el.getBoundingClientRect();
                 var rectInfo = {
-                    sx: rect.left + document.documentElement.scrollLeft,
-                    sy: rect.top + document.documentElement.scrollTop,
+                    sx: rect.left + (document.documentElement.scrollLeft + document.body.scrollLeft),
+                    sy: rect.top + (document.documentElement.scrollTop + document.body.scrollTop),
                     width: rect.width,
                     height: rect.height
                 };
@@ -389,8 +389,8 @@ var Feedback = function (_React$Component) {
                     this.dragRect = true;
                 }
                 var toolBarType = this.state.toolBarType;
-                var clientX = e.clientX + document.documentElement.scrollLeft,
-                    clientY = e.clientY + document.documentElement.scrollTop,
+                var clientX = e.clientX + (document.documentElement.scrollLeft + document.body.scrollLeft),
+                    clientY = e.clientY + (document.documentElement.scrollTop + document.body.scrollTop),
                     width = this.startX - clientX,
                     height = this.startY - clientY;
                 this.initCanvas();
@@ -579,8 +579,8 @@ var Feedback = function (_React$Component) {
             this.move = false;
             this.canvasMD = false;
             if (this.dragRect) {
-                var clientX = e.clientX + document.documentElement.scrollLeft,
-                    clientY = e.clientY + document.documentElement.scrollTop,
+                var clientX = e.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft),
+                    clientY = e.clientY + (document.documentElement.scrollTop || document.body.scrollTop),
                     width = this.startX - clientX,
                     height = this.startY - clientY;
                 if (Math.abs(width) < 6 || Math.abs(height) < 6) {
@@ -652,144 +652,6 @@ var Feedback = function (_React$Component) {
             return visible;
         }
     }, {
-        key: 'handleCorsImg',
-        value: function handleCorsImg(parent, resolve, reject) {
-            var _this8 = this;
-
-            if (!this.props.proxy) {
-                resolve();
-                return;
-            }
-            var origin = location.origin;
-            var pItem = [];
-            var imgItem = parent.getElementsByTagName('img');
-            if (imgItem.length == 0) {
-                resolve();
-                return;
-            }
-            var reg = /^(\/|\.)/;
-
-            var _loop = function _loop(i) {
-                var src = imgItem[i].src;
-                pItem[i] = new Promise(function (resolve2, reject2) {
-                    if (src && !reg.test(src) && src.indexOf(origin) == -1 && src.indexOf('data:image/png;base64,') == -1 && _this8.isVisible(imgItem[i])) {
-                        var inList = false;
-                        (_this8.props.allowCORS || []).map(function (d, k) {
-                            if (d && src.indexOf(d) > -1) {
-                                inList = true;
-                            }
-                        });
-                        if (inList) {
-                            resolve2();
-                        } else {
-                            if (imgItem[i].getAttribute('data-feedbackBase64')) {
-                                imgItem[i].setAttribute('src', imgItem[i].getAttribute('data-feedbackBase64'));
-                                resolve2();
-                            } else {
-                                fetch(_this8.props.proxy, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Accept': 'application/json',
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({ url: src })
-                                }).then(function (res) {
-                                    return res.json();
-                                }).then(function (data) {
-                                    if (data.code == 200) {
-                                        imgItem[i].setAttribute('data-feedbackOrigin', src);
-                                        imgItem[i].setAttribute('src', 'data:image/png;base64,' + data.img);
-                                        resolve2();
-                                    } else {
-                                        resolve2();
-                                    }
-                                }).catch(function (e) {
-                                    console.error(e);
-                                    resolve2();
-                                });
-                            }
-                        }
-                    } else {
-                        resolve2();
-                    }
-                });
-            };
-
-            for (var i = 0; i < imgItem.length; i++) {
-                _loop(i);
-            }
-            if (pItem.length > 0) {
-                Promise.all(pItem).then(function () {
-                    resolve();
-                });
-            } else {
-                resolve();
-            }
-        }
-    }, {
-        key: 'handleIframe',
-        value: function handleIframe(parent, resolve, reject) {
-            var _this9 = this;
-
-            var iframeItem = parent.getElementsByTagName('iframe');
-            if (iframeItem.length == 0) {
-                resolve();
-                return;
-            }
-            var pItem = [];
-
-            var _loop2 = function _loop2(i) {
-                var iframe = iframeItem[i];
-                pItem.push(new Promise(function (presolve, preject) {
-                    var doc = void 0;
-                    var isCors = false;
-                    try {
-                        doc = iframe.contentWindow.document.body;
-                    } catch (error) {
-                        isCors = true;
-                    }
-                    if (!isCors) {
-                        var shoted = iframe.getAttribute('data-shoted');
-                        if (shoted == 'yes') {
-                            presolve();
-                            return;
-                        }
-                        var imgPromise = new Promise(function (resolve2, reject2) {
-                            if (_this9.isVisible(iframe)) {
-                                _this9.handleCorsImg(doc, resolve2, reject2);
-                            } else {
-                                resolve2();
-                            }
-                        });
-
-                        var iframePromise = new Promise(function (resolve3, reject3) {
-                            if (_this9.isVisible(iframe)) {
-                                _this9.handleIframe(doc, resolve3, reject3);
-                            } else {
-                                resolve3();
-                            }
-                        });
-                        Promise.all([imgPromise, iframePromise]).then(function () {
-                            presolve();
-                        });
-                    } else {
-                        resolve();
-                    }
-                }));
-            };
-
-            for (var i = 0; i < iframeItem.length; i++) {
-                _loop2(i);
-            }
-            if (pItem.length > 0) {
-                Promise.all(pItem).then(function () {
-                    resolve();
-                });
-            } else {
-                resolve();
-            }
-        }
-    }, {
         key: 'handleVideo',
         value: function handleVideo(parent, resolve, reject) {
             var videoItem = parent.getElementsByTagName('video');
@@ -818,83 +680,38 @@ var Feedback = function (_React$Component) {
             resolve();
         }
     }, {
-        key: 'recoverImgSrc',
-        value: function recoverImgSrc(parent) {
-            var imgItem = parent.getElementsByTagName('img');
-            for (var i = 0; i < imgItem.length; i++) {
-                var feedbackorigin = imgItem[i].getAttribute('data-feedbackorigin');
-                var _src = imgItem[i].getAttribute('src');
-                if (feedbackorigin) {
-                    imgItem[i].src = feedbackorigin;
-                    imgItem[i].removeAttribute('data-feedbackorigin');
-                    imgItem[i].setAttribute('data-feedbackBase64', _src);
-                }
-            }
-        }
-    }, {
-        key: 'recoverIframe',
-        value: function recoverIframe(parent) {
-            var iframeItem = parent.getElementsByTagName('iframe');
-            for (var i = 0; i < iframeItem.length; i++) {
-                var _iframe = iframeItem[i];
-                var doc = void 0;
-                var isCors = false;
-                try {
-                    doc = _iframe.contentWindow.document.body;
-                } catch (error) {
-                    isCors = true;
-                }
-                if (!isCors) {
-                    this.recoverPage(doc);
-                }
-            }
-        }
-    }, {
-        key: 'recoverPage',
-        value: function recoverPage(parent) {
-            this.recoverImgSrc(parent);
-            this.recoverIframe(parent);
-        }
-    }, {
         key: 'shotScreen',
         value: function shotScreen() {
-            var _this10 = this;
+            var _this8 = this;
 
             if (this.state.loading) return;
             this.loadingState(true);
             var hightlightItem = this.state.hightlightItem;
             this.switchCanvasVisible(hightlightItem.length > 0);
-            var imgPromise = new Promise(function (resolve, reject) {
-                _this10.handleCorsImg(document.body, resolve, reject);
-            });
             var videoPromise = new Promise(function (resolve, reject) {
-                _this10.handleVideo(document.body, resolve, reject);
+                _this8.handleVideo(document.body, resolve, reject);
             });
-            var iframePromsie = new Promise(function (resolve, reject) {
-                _this10.handleIframe(document.body, resolve, reject);
-            });
-            Promise.all([imgPromise, videoPromise, iframePromsie]).then(function () {
+            Promise.all([videoPromise]).then(function () {
                 (0, _html2canvas2.default)(document.body, {
+                    proxy: _this8.props.proxy || '',
                     width: window.innerWidth,
                     height: window.innerHeight,
-                    x: document.documentElement.scrollLeft,
-                    y: document.documentElement.scrollTop
+                    x: document.documentElement.scrollLeft || document.body.scrollLeft,
+                    y: document.documentElement.scrollTop || document.body.scrollTop
                 }).then(function (canvas) {
                     var src = canvas.toDataURL('image/png');
-                    _this10.refs.screenshotPrev.src = src;
-                    _this10.refs.screenshotPrev.onload = function () {
-                        _this10.setState({
+                    _this8.refs.screenshotPrev.src = src;
+                    _this8.refs.screenshotPrev.onload = function () {
+                        _this8.setState({
                             screenshotEdit: true
                         });
                     };
-                    _this10.loadingState(false);
-                    _this10.recoverPage(document.body);
+                    _this8.loadingState(false);
                 }).catch(function (e) {
-                    _this10.setState({
+                    _this8.setState({
                         screenshotEdit: false
                     });
-                    _this10.loadingState(false);
-                    _this10.recoverPage(document.body);
+                    _this8.loadingState(false);
                     console.log(e);
                 });
             });
@@ -902,7 +719,7 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'clearHightlight',
         value: function clearHightlight(k, e) {
-            var _this11 = this;
+            var _this9 = this;
 
             var hightlightItem = this.state.hightlightItem;
             hightlightItem.splice(k, 1);
@@ -910,9 +727,9 @@ var Feedback = function (_React$Component) {
                 hightlightItem: hightlightItem
             });
             setTimeout(function () {
-                _this11.initCanvas();
-                _this11.drawHightlightBorder();
-                _this11.drawHightlightArea();
+                _this9.initCanvas();
+                _this9.drawHightlightBorder();
+                _this9.drawHightlightArea();
             });
         }
     }, {
@@ -928,13 +745,13 @@ var Feedback = function (_React$Component) {
         key: 'canvasMouseDown',
         value: function canvasMouseDown(e) {
             this.canvasMD = true;
-            this.startX = e.clientX + document.documentElement.scrollLeft;
-            this.startY = e.clientY + document.documentElement.scrollTop;
+            this.startX = e.clientX + (document.documentElement.scrollLeft + document.body.scrollLeft);
+            this.startY = e.clientY + (document.documentElement.scrollTop + document.body.scrollTop);
         }
     }, {
         key: 'snackbar',
         value: function snackbar(msg) {
-            var _this12 = this;
+            var _this10 = this;
 
             if (this.timer) {
                 clearTimeout(this.timer);
@@ -944,7 +761,7 @@ var Feedback = function (_React$Component) {
                 snackbarMsg: msg || ''
             });
             this.timer = setTimeout(function () {
-                _this12.setState({
+                _this10.setState({
                     snackbar: false,
                     snackbarMsg: ''
                 });
@@ -986,7 +803,7 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'render',
         value: function render() {
-            var _this13 = this;
+            var _this11 = this;
 
             var state = this.state,
                 props = this.props;
@@ -1018,7 +835,7 @@ var Feedback = function (_React$Component) {
                             ) : null,
                             _react2.default.createElement('textarea', { placeholder: '\u8BF7\u8BF4\u660E\u60A8\u7684\u95EE\u9898\u6216\u5206\u4EAB\u60A8\u7684\u60F3\u6CD5', ref: 'textarea', defaultValue: state.text,
                                 onChange: function onChange(e) {
-                                    _this13.setState({
+                                    _this11.setState({
                                         text: e.target.value,
                                         textError: ''
                                     });
@@ -1158,7 +975,7 @@ var Feedback = function (_React$Component) {
                             {
                                 className: 'tool ' + (this.state.toolBarType == 'hightlight' ? 'tool-active' : '') + ' hight-light',
                                 onClick: function onClick() {
-                                    _this13.setState({
+                                    _this11.setState({
                                         toolBarType: 'hightlight'
                                     });
                                 }
@@ -1199,7 +1016,7 @@ var Feedback = function (_React$Component) {
                             'div',
                             { className: 'tool ' + (this.state.toolBarType == 'black' ? 'tool-active' : '') + ' hide',
                                 onClick: function onClick() {
-                                    _this13.setState({
+                                    _this11.setState({
                                         toolBarType: 'black'
                                     });
                                 }
@@ -1268,7 +1085,7 @@ var Feedback = function (_React$Component) {
                                     } },
                                 _react2.default.createElement(
                                     'span',
-                                    { className: 'close', onClick: _this13.clearHightlight.bind(_this13, k) },
+                                    { className: 'close', onClick: _this11.clearHightlight.bind(_this11, k) },
                                     _react2.default.createElement(
                                         'svg',
                                         { viewBox: '0 0 1024 1024',
@@ -1294,7 +1111,7 @@ var Feedback = function (_React$Component) {
                                     } },
                                 _react2.default.createElement(
                                     'span',
-                                    { className: 'close', onClick: _this13.clearBlack.bind(_this13, k) },
+                                    { className: 'close', onClick: _this11.clearBlack.bind(_this11, k) },
                                     _react2.default.createElement(
                                         'svg',
                                         { viewBox: '0 0 1024 1024',
@@ -1352,7 +1169,7 @@ var Feedback = function (_React$Component) {
                                 state.textError
                             ) : null,
                             _react2.default.createElement('textarea', { placeholder: '\u8BF7\u8BF4\u660E\u60A8\u7684\u95EE\u9898\u6216\u5206\u4EAB\u60A8\u7684\u60F3\u6CD5', ref: 'textarea', defaultValue: state.text, onChange: function onChange(e) {
-                                    _this13.setState({
+                                    _this11.setState({
                                         text: e.target.value,
                                         textError: ''
                                     });
@@ -1436,6 +1253,5 @@ Feedback.propTypes = {
     cancel: _propTypes2.default.func.isRequired,
     send: _propTypes2.default.func.isRequired,
     license: _propTypes2.default.string,
-    allowCORS: _propTypes2.default.array,
     proxy: _propTypes2.default.string
 };

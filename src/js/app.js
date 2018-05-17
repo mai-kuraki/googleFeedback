@@ -10,7 +10,6 @@ class Feedback {
         this.send = option.send;
         this.theme = option.theme || null;
         this.license = option.license || '';
-        this.allowCORS = option.allowCORS || [];
         this.proxy = option.proxy || null;
         if(!this.container) {
             console.error('missing container element');
@@ -21,7 +20,6 @@ class Feedback {
             send={this.send}
             theme={this.theme}
             license={this.license}
-            allowCORS={this.allowCORS}
             proxy={this.proxy}
         />, this.container);
     }
@@ -63,7 +61,6 @@ class Page extends React.Component {
                             cancel={this.cancel.bind(this)}
                             send={this.props.send}
                             license={this.props.license}
-                            allowCORS={this.props.allowCORS}
                             proxy={this.props.proxy}
                         />:null
                 }
