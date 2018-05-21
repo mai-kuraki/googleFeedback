@@ -759,13 +759,13 @@ var Feedback = function (_React$Component) {
         key: 'send',
         value: function send() {
             if (this.state.loading) {
-                this.snackbar('正在截图中...');
+                this.snackbar(this.props.loadingTip || '正在加载屏幕截图...');
                 return;
             }
             var text = this.state.text;
             if (!text) {
                 this.setState({
-                    textError: '必须添加说明'
+                    textError: this.props.requiredTip || '必须添加说明'
                 });
                 this.refs.textarea.focus();
                 return;
@@ -821,7 +821,7 @@ var Feedback = function (_React$Component) {
                                 { className: 'required-tip' },
                                 state.textError
                             ) : null,
-                            _react2.default.createElement('textarea', { placeholder: '\u8BF7\u8BF4\u660E\u60A8\u7684\u95EE\u9898\u6216\u5206\u4EAB\u60A8\u7684\u60F3\u6CD5', ref: 'textarea', defaultValue: state.text,
+                            _react2.default.createElement('textarea', { placeholder: props.placeholder || '请说明您的问题或分享您的想法', ref: 'textarea', defaultValue: state.text,
                                 onChange: function onChange(e) {
                                     _this11.setState({
                                         text: e.target.value,
@@ -857,7 +857,7 @@ var Feedback = function (_React$Component) {
                                 _react2.default.createElement(
                                     'label',
                                     null,
-                                    '\u5305\u542B\u622A\u56FE'
+                                    props.checkboxLabel || '包含截图'
                                 )
                             ),
                             state.shotOpen ? _react2.default.createElement(
@@ -889,7 +889,7 @@ var Feedback = function (_React$Component) {
                                     _react2.default.createElement(
                                         'span',
                                         { className: 'loading-text' },
-                                        '\u6B63\u5728\u52A0\u8F7D\u5C4F\u5E55\u622A\u56FE...'
+                                        this.props.loadingTip || '正在加载屏幕截图...'
                                     )
                                 ) : null,
                                 _react2.default.createElement(
@@ -913,7 +913,7 @@ var Feedback = function (_React$Component) {
                                         _react2.default.createElement(
                                             'span',
                                             { className: 'edit-label' },
-                                            '\u70B9\u51FB\u7F16\u8F91\u9AD8\u4EAE\u6216\u9690\u85CF\u4FE1\u606F'
+                                            props.editTip || '点击编辑高亮或隐藏信息'
                                         )
                                     ) : null,
                                     _react2.default.createElement('img', { id: 'screenshotPrev', ref: 'screenshotPrev', src: '' })
@@ -926,7 +926,7 @@ var Feedback = function (_React$Component) {
                                 _react2.default.createElement(
                                     'div',
                                     { className: 'flatbutton cancel', style: { color: '#757575' }, onClick: this.cancel.bind(this) },
-                                    '\u53D6\u6D88'
+                                    props.cancelLabel || '取消'
                                 ),
                                 _react2.default.createElement(
                                     'div',
@@ -934,7 +934,7 @@ var Feedback = function (_React$Component) {
                                         style: { color: this.props.theme || '#3986FF' },
                                         onClick: this.send.bind(this)
                                     },
-                                    '\u53D1\u9001'
+                                    props.confirmLabel || '发送'
                                 )
                             )
                         )
@@ -1132,7 +1132,7 @@ var Feedback = function (_React$Component) {
                             _react2.default.createElement(
                                 'label',
                                 null,
-                                '\u53D1\u9001\u53CD\u9988'
+                                props.title || '发送反馈'
                             )
                         ),
                         _react2.default.createElement(
@@ -1156,7 +1156,7 @@ var Feedback = function (_React$Component) {
                                 { className: 'required-tip' },
                                 state.textError
                             ) : null,
-                            _react2.default.createElement('textarea', { placeholder: '\u8BF7\u8BF4\u660E\u60A8\u7684\u95EE\u9898\u6216\u5206\u4EAB\u60A8\u7684\u60F3\u6CD5', ref: 'textarea', defaultValue: state.text, onChange: function onChange(e) {
+                            _react2.default.createElement('textarea', { placeholder: props.placeholder || '请说明您的问题或分享您的想法', ref: 'textarea', defaultValue: state.text, onChange: function onChange(e) {
                                     _this11.setState({
                                         text: e.target.value,
                                         textError: ''
@@ -1191,7 +1191,7 @@ var Feedback = function (_React$Component) {
                                 _react2.default.createElement(
                                     'label',
                                     null,
-                                    '\u5305\u542B\u622A\u56FE'
+                                    props.checkboxLabel || '包含截图'
                                 )
                             ),
                             state.shotOpen ? _react2.default.createElement(
@@ -1241,5 +1241,13 @@ Feedback.propTypes = {
     cancel: _propTypes2.default.func.isRequired,
     send: _propTypes2.default.func.isRequired,
     license: _propTypes2.default.string,
-    proxy: _propTypes2.default.string
+    proxy: _propTypes2.default.string,
+    title: _propTypes2.default.string,
+    placeholder: _propTypes2.default.string,
+    requiredTip: _propTypes2.default.string,
+    editTip: _propTypes2.default.string,
+    loadingTip: _propTypes2.default.string,
+    checkboxLabel: _propTypes2.default.string,
+    cancelLabel: _propTypes2.default.string,
+    confirmLabel: _propTypes2.default.string
 };

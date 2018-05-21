@@ -681,13 +681,13 @@ export default class Feedback extends React.Component {
 
     send() {
         if(this.state.loading) {
-            this.snackbar('正在截图中...');
+            this.snackbar(this.props.loadingTip || '正在加载屏幕截图...');
             return;
         }
         let text = this.state.text;
         if(!text) {
             this.setState({
-                textError: '必须添加说明',
+                textError: this.props.requiredTip || '必须添加说明',
             });
             this.refs.textarea.focus();
             return;
@@ -734,7 +734,7 @@ export default class Feedback extends React.Component {
                                                 state.textError ?
                                                     <div className="required-tip">{state.textError}</div> : null
                                             }
-                                            <textarea placeholder="请说明您的问题或分享您的想法" ref="textarea" defaultValue={state.text}
+                                            <textarea placeholder={props.placeholder || '请说明您的问题或分享您的想法'} ref="textarea" defaultValue={state.text}
                                                       onChange={(e) => {
                                                           this.setState({
                                                               text: e.target.value,
@@ -759,7 +759,7 @@ export default class Feedback extends React.Component {
                                                             d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
                                                     </svg>
                                                 </div>
-                                                <label>包含截图</label>
+                                                <label>{props.checkboxLabel || '包含截图'}</label>
                                             </div>
                                             {
                                                 state.shotOpen ?
@@ -783,7 +783,7 @@ export default class Feedback extends React.Component {
                                                                                     }}></circle>
                                                                         </svg>
                                                                     </div>
-                                                                    <span className="loading-text">正在加载屏幕截图...</span>
+                                                                    <span className="loading-text">{this.props.loadingTip || '正在加载屏幕截图...'}</span>
                                                                 </div> : null
                                                         }
                                                         <div className="screenshot">
@@ -798,7 +798,7 @@ export default class Feedback extends React.Component {
                                                                                     d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path>
                                                                             </svg>
                                                                         </div>
-                                                                        <span className="edit-label">点击编辑高亮或隐藏信息</span>
+                                                                        <span className="edit-label">{props.editTip || '点击编辑高亮或隐藏信息'}</span>
                                                                     </div> : null
                                                             }
                                                             <img id="screenshotPrev" ref="screenshotPrev" src=""/>
@@ -809,12 +809,11 @@ export default class Feedback extends React.Component {
                                         Google。我们将根据自己的<a href="" style="color: ${props.theme || '#3986FF'}">隐私权政策</a>和<a href="" style="color: ${props.theme || '#3986FF'}">服务条款</a>使用您提供的信息帮助解决技术问题和改进我们的服务。`}}>
                                             </div>
                                             <div className="actions">
-                                                <div className="flatbutton cancel" style={{color: '#757575'}} onClick={this.cancel.bind(this)}>取消
-                                                </div>
+                                                <div className="flatbutton cancel" style={{color: '#757575'}} onClick={this.cancel.bind(this)}>{props.cancelLabel || '取消'}</div>
                                                 <div className="flatbutton confirm"
                                                      style={{color: this.props.theme || '#3986FF'}}
                                                      onClick={this.send.bind(this)}
-                                                >发送
+                                                >{props.confirmLabel || '发送'}
                                                 </div>
                                             </div>
                                         </div>
@@ -960,7 +959,7 @@ export default class Feedback extends React.Component {
                                     <span className="close btn" onClick={this.cancel.bind(this)}>
                                         <svg focusable="false" aria-label="CANCEL" fill="white" viewBox="0 0 24 24" height="24" width="24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
                                     </span>
-                                    <label>发送反馈</label>
+                                    <label>{props.title ||'发送反馈'}</label>
                                 </div>
                                 <span className="send btn" onClick={this.send.bind(this)}>
                                     <svg focusable="false" aria-label="SEND" fill="white" viewBox="0 0 24 24" height="24" width="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
@@ -972,7 +971,7 @@ export default class Feedback extends React.Component {
                                         state.textError?
                                             <div className="required-tip">{state.textError}</div>:null
                                     }
-                                    <textarea placeholder="请说明您的问题或分享您的想法" ref="textarea" defaultValue={state.text} onChange={(e) => {
+                                    <textarea placeholder={props.placeholder || '请说明您的问题或分享您的想法'} ref="textarea" defaultValue={state.text} onChange={(e) => {
                                         this.setState({
                                             text: e.target.value,
                                             textError: '',
@@ -994,7 +993,7 @@ export default class Feedback extends React.Component {
                                                     d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
                                             </svg>
                                         </div>
-                                        <label>包含截图</label>
+                                        <label>{props.checkboxLabel || '包含截图'}</label>
                                     </div>
                                     {
                                         state.shotOpen ?
@@ -1040,5 +1039,13 @@ Feedback.propTypes = {
     cancel: PropTypes.func.isRequired,
     send: PropTypes.func.isRequired,
     license: PropTypes.string,
-    proxy: PropTypes.string
+    proxy: PropTypes.string,
+    title: PropTypes.string,
+    placeholder: PropTypes.string,
+    requiredTip: PropTypes.string,
+    editTip: PropTypes.string,
+    loadingTip: PropTypes.string,
+    checkboxLabel: PropTypes.string,
+    cancelLabel: PropTypes.string,
+    confirmLabel: PropTypes.string
 };

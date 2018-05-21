@@ -11,6 +11,14 @@ class Feedback {
         this.theme = option.theme || null;
         this.license = option.license || '';
         this.proxy = option.proxy || null;
+        this.title = option.title || '';
+        this.placeholder = option.placeholder || '';
+        this.requiredTip = option.requiredTip || '';
+        this.editTip = option.editTip || '';
+        this.loadingTip = option.loadingTip || '';
+        this.checkboxLabel = option.checkboxLabel || '';
+        this.cancelLabel = option.cancelLabel || '';
+        this.confirmLabel = option.confirmLabel || '';
         if(!this.container) {
             console.error('missing container element');
             return;
@@ -21,6 +29,14 @@ class Feedback {
             theme={this.theme}
             license={this.license}
             proxy={this.proxy}
+            title={this.title}
+            placeholder={this.placeholder}
+            requiredTip={this.requiredTip}
+            editTip={this.editTip}
+            loadingTip={this.loadingTip}
+            checkboxLabel={this.checkboxLabel}
+            cancelLabel={this.cancelLabel}
+            confirmLabel={this.confirmLabel}
         />, this.container);
     }
 }
@@ -62,6 +78,14 @@ class Page extends React.Component {
                             send={this.props.send}
                             license={this.props.license}
                             proxy={this.props.proxy}
+                            title={this.props.title}
+                            placeholder={this.props.placeholder}
+                            requiredTip={this.props.requiredTip}
+                            editTip={this.props.editTip}
+                            loadingTip={this.props.loadingTip}
+                            checkboxLabel={this.props.checkboxLabel}
+                            cancelLabel={this.props.cancelLabel}
+                            confirmLabel={this.props.confirmLabel}
                         />:null
                 }
             </React.Fragment>
