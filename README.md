@@ -132,7 +132,7 @@ react 组件：
 |confirmLabel|确认按钮文字|string|✗|
 |hightlightTip|高亮按钮文字提示|string|✗|
 |hideTip|隐藏按钮文字提示|string|✗|
-|editDoneLabel|确认按钮文字|string|✗|
+|editDoneLabel|编辑确认按钮文字|string|✗|
 页面中直接引用option参数：
 | 参数 | 功能 | 类型 | 是否必填 |
 |-|-|-|-|
@@ -149,6 +149,9 @@ react 组件：
 |checkboxLabel|勾选框文字|string|✗|
 |cancelLabel|取消按钮文字|string|✗|
 |confirmLabel|确认按钮文字|string|✗|
+|hightlightTip|高亮按钮文字提示|string|✗|
+|hideTip|隐藏按钮文字提示|string|✗|
+|editDoneLabel|编辑确认按钮文字|string|✗|
 |send|发送按钮处理函数，会传回收集的数据|function|✓|
 ### 4.跨域代理
 需要启动一个服务用于代理。
@@ -225,6 +228,9 @@ class Page extends React.Component {
                             checkboxLabel="Include screenshot"
                             cancelLabel="CANCEL"
                             confirmLabel="SEND"
+                            hightlightTip= "Hightlight issues"
+                            hideTip= "Hide sensitive info"
+                            editDoneLabel= "DONE"
                         />:null
                 }
             </div>
@@ -254,6 +260,9 @@ Standalone:
         checkboxLabel: "Include screenshot",
         cancelLabel: "CANCEL",
         confirmLabel: "SEND",
+        hightlightTip: 'Hightlight issues',
+        hideTip: 'Hide sensitive info',
+        editDoneLabel: 'DONE',
         license: `Go to the
                 <a href="" >Legal Help page </a>
                 to request content changes for legal reasons. Some
@@ -283,6 +292,9 @@ Using React:
 |checkboxLabel|check box label|string|✗|
 |cancelLabel|cancel button label|string|✗|
 |confirmLabel|confirm button text|string|✗|
+|hightlightTip|Highlight button text tip|string|✗|
+|hideTip|Hide button text tip|string|✗|
+|editDoneLabel|Edit confirmation button text|string|✗|
 Standalone option:
 | name | description | dataType | isRequired |
 |-|-|-|-|
@@ -299,6 +311,9 @@ Standalone option:
 |checkboxLabel|check box label|string|✗|
 |cancelLabel|cancel button label|string|✗|
 |confirmLabel|confirm button text|string|✗|
+|hightlightTip|Highlight button text tip|string|✗|
+|hideTip|Hide button text tip|string|✗|
+|editDoneLabel|Edit confirmation button text|string|✗|
 |send|send button handler function, will return the collected data|function|✓|
 
 ### 4.Cross domain agent
