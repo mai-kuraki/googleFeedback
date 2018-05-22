@@ -186,6 +186,7 @@ var Feedback = function (_React$Component) {
         var _this = _possibleConstructorReturn(this, (Feedback.__proto__ || Object.getPrototypeOf(Feedback)).call(this));
 
         _this.state = {
+            docWidth: document.body.clientWidth,
             docHeight: document.body.clientHeight,
             winHeight: window.innerHeight,
             device: 'pc',
@@ -295,9 +296,9 @@ var Feedback = function (_React$Component) {
         key: 'switchCanvasVisible',
         value: function switchCanvasVisible(visible) {
             if (visible) {
-                this.refs.canvas.removeAttribute('data-html2canvas-ignore');
+                this.refs.shadowCanvas.removeAttribute('data-html2canvas-ignore');
             } else {
-                this.refs.canvas.setAttribute('data-html2canvas-ignore', 'true');
+                this.refs.shadowCanvas.setAttribute('data-html2canvas-ignore', 'true');
             }
         }
     }, {
@@ -331,10 +332,10 @@ var Feedback = function (_React$Component) {
             } else {
                 if (this.hasHelper) {
                     this.hasHelper = false;
+                    this.initCanvas();
+                    this.drawHightlightBorder();
+                    this.drawHightlightArea();
                 }
-                this.initCanvas();
-                this.drawHightlightBorder();
-                this.drawHightlightArea();
             }
         }
     }, {
@@ -374,6 +375,7 @@ var Feedback = function (_React$Component) {
                 this.drawHightlightBorder();
                 this.drawHightlightArea();
                 this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
+                this.sctx.clearRect(info.sx, info.sy, info.width, info.height);
             } else if (toolBarType == 'black') {
                 this.drawHightlightBorder();
                 this.drawHightlightArea();
@@ -402,6 +404,7 @@ var Feedback = function (_React$Component) {
                     this.ctx.stroke();
                     this.drawHightlightArea();
                     this.ctx.clearRect(clientX, clientY, width, height);
+                    this.sctx.clearRect(clientX, clientY, width, height);
                 } else if (toolBarType == 'black') {
                     this.drawHightlightArea();
                     this.ctx.fillStyle = 'rgba(0,0,0,.4)';
@@ -434,7 +437,6 @@ var Feedback = function (_React$Component) {
         key: 'componentDidMount',
         value: function componentDidMount() {
             this.calcHeight();
-            this.initCanvas();
             this.addEventListener();
             if (this.state.shotOpen) {
                 this.shotScreen();
@@ -443,14 +445,21 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'calcHeight',
         value: function calcHeight() {
-            var docHeight = document.body.clientHeight;
+            var _this3 = this;
+
+            var docWidth = document.body.clientWidth,
+                docHeight = document.body.clientHeight;
             var windowHeight = window.innerHeight;
             if (docHeight < windowHeight) {
                 docHeight = windowHeight;
             }
             this.setState({
+                docWidth: docWidth,
                 docHeight: docHeight,
                 winHeight: windowHeight
+            });
+            setTimeout(function () {
+                _this3.initCanvas(true);
             });
         }
     }, {
@@ -479,44 +488,52 @@ var Feedback = function (_React$Component) {
         }
     }, {
         key: 'initCanvas',
-        value: function initCanvas() {
+        value: function initCanvas(init) {
             var canvas = this.refs.canvas;
+            var shadowCanvas = this.refs.shadowCanvas;
+            var docWidth = this.state.docWidth,
+                docHeight = this.state.docHeight;
             if (!this.ctx) {
                 this.ctx = canvas.getContext('2d');
             }
-            var docWidth = document.body.clientWidth,
-                docHeight = document.body.clientHeight;
-            if (docHeight < window.innerHeight) {
-                docHeight = window.innerHeight;
+            if (!this.sctx) {
+                this.sctx = shadowCanvas.getContext('2d');
+            }
+            if (init) {
+                canvas.style.width = docWidth;
+                canvas.style.height = docHeight;
+                shadowCanvas.style.width = docWidth;
+                shadowCanvas.style.height = docHeight;
             }
             canvas.width = docWidth;
             canvas.height = docHeight;
-            canvas.style.width = docWidth;
-            canvas.style.height = docHeight;
-            this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            this.ctx.fillRect(0, 0, docWidth, docHeight);
+            shadowCanvas.width = docWidth;
+            shadowCanvas.height = docHeight;
+            this.sctx.fillStyle = 'rgba(0,0,0,0.38)';
+            this.sctx.fillRect(0, 0, docWidth, docHeight);
         }
     }, {
         key: 'drawHightlightBorder',
         value: function drawHightlightBorder() {
-            var _this3 = this;
+            var _this4 = this;
 
             var hightlightItem = this.state.hightlightItem;
             hightlightItem.map(function (data, k) {
-                _this3.ctx.lineWidth = '5';
-                _this3.ctx.strokeStyle = '#FEEA4E';
-                _this3.ctx.rect(data.sx, data.sy, data.width, data.height);
-                _this3.ctx.stroke();
+                _this4.ctx.lineWidth = '5';
+                _this4.ctx.strokeStyle = '#FEEA4E';
+                _this4.ctx.rect(data.sx, data.sy, data.width, data.height);
+                _this4.ctx.stroke();
             });
         }
     }, {
         key: 'drawHightlightArea',
         value: function drawHightlightArea() {
-            var _this4 = this;
+            var _this5 = this;
 
             var hightlightItem = this.state.hightlightItem;
             hightlightItem.map(function (data, k) {
-                _this4.ctx.clearRect(data.sx, data.sy, data.width, data.height);
+                _this5.sctx.clearRect(data.sx, data.sy, data.width, data.height);
+                _this5.ctx.clearRect(data.sx, data.sy, data.width, data.height);
             });
         }
     }, {
@@ -539,13 +556,13 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'toEditMode',
         value: function toEditMode() {
-            var _this5 = this;
+            var _this6 = this;
 
             this.setState({
                 editMode: true
             });
             setTimeout(function () {
-                var toolBar = _this5.refs.toolBar,
+                var toolBar = _this6.refs.toolBar,
                     windowWidth = window.innerWidth,
                     windowHeight = window.innerHeight;
                 toolBar.style.left = windowWidth * 0.5 + 'px';
@@ -555,13 +572,13 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'editCancel',
         value: function editCancel() {
-            var _this6 = this;
+            var _this7 = this;
 
             this.setState({
                 editMode: false
             });
             setTimeout(function () {
-                _this6.shotScreen();
+                _this7.shotScreen();
             });
         }
     }, {
@@ -574,7 +591,7 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'handleMoveMouseUp',
         value: function handleMoveMouseUp(e) {
-            var _this7 = this;
+            var _this8 = this;
 
             this.move = false;
             this.canvasMD = false;
@@ -615,9 +632,9 @@ var Feedback = function (_React$Component) {
                     });
                 }
                 setTimeout(function () {
-                    _this7.dragRect = false;
-                    _this7.drawHightlightBorder();
-                    _this7.drawHightlightArea();
+                    _this8.dragRect = false;
+                    _this8.drawHightlightBorder();
+                    _this8.drawHightlightArea();
                 });
             }
         }
@@ -670,36 +687,36 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'shotScreen',
         value: function shotScreen() {
-            var _this8 = this;
+            var _this9 = this;
 
             if (this.state.loading) return;
             this.loadingState(true);
             var hightlightItem = this.state.hightlightItem;
             this.switchCanvasVisible(hightlightItem.length > 0);
             var videoPromise = new Promise(function (resolve, reject) {
-                _this8.handleVideo(document.body, resolve, reject);
+                _this9.handleVideo(document.body, resolve, reject);
             });
             Promise.all([videoPromise]).then(function () {
                 (0, _html2canvas2.default)(document.body, {
-                    proxy: _this8.props.proxy || '',
+                    proxy: _this9.props.proxy || '',
                     width: window.innerWidth,
                     height: window.innerHeight,
                     x: document.documentElement.scrollLeft || document.body.scrollLeft,
                     y: document.documentElement.scrollTop || document.body.scrollTop
                 }).then(function (canvas) {
                     var src = canvas.toDataURL('image/png');
-                    _this8.refs.screenshotPrev.src = src;
-                    _this8.refs.screenshotPrev.onload = function () {
-                        _this8.setState({
+                    _this9.refs.screenshotPrev.src = src;
+                    _this9.refs.screenshotPrev.onload = function () {
+                        _this9.setState({
                             screenshotEdit: true
                         });
                     };
-                    _this8.loadingState(false);
+                    _this9.loadingState(false);
                 }).catch(function (e) {
-                    _this8.setState({
+                    _this9.setState({
                         screenshotEdit: false
                     });
-                    _this8.loadingState(false);
+                    _this9.loadingState(false);
                     console.log(e);
                 });
             });
@@ -707,7 +724,7 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'clearHightlight',
         value: function clearHightlight(k, e) {
-            var _this9 = this;
+            var _this10 = this;
 
             var hightlightItem = this.state.hightlightItem;
             hightlightItem.splice(k, 1);
@@ -715,9 +732,9 @@ var Feedback = function (_React$Component) {
                 hightlightItem: hightlightItem
             });
             setTimeout(function () {
-                _this9.initCanvas();
-                _this9.drawHightlightBorder();
-                _this9.drawHightlightArea();
+                _this10.initCanvas();
+                _this10.drawHightlightBorder();
+                _this10.drawHightlightArea();
             });
         }
     }, {
@@ -739,7 +756,7 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'snackbar',
         value: function snackbar(msg) {
-            var _this10 = this;
+            var _this11 = this;
 
             if (this.timer) {
                 clearTimeout(this.timer);
@@ -749,7 +766,7 @@ var Feedback = function (_React$Component) {
                 snackbarMsg: msg || ''
             });
             this.timer = setTimeout(function () {
-                _this10.setState({
+                _this11.setState({
                     snackbar: false,
                     snackbarMsg: ''
                 });
@@ -791,7 +808,7 @@ var Feedback = function (_React$Component) {
     }, {
         key: 'render',
         value: function render() {
-            var _this11 = this;
+            var _this12 = this;
 
             var state = this.state,
                 props = this.props;
@@ -823,7 +840,7 @@ var Feedback = function (_React$Component) {
                             ) : null,
                             _react2.default.createElement('textarea', { placeholder: props.placeholder || '请说明您的问题或分享您的想法', ref: 'textarea', defaultValue: state.text,
                                 onChange: function onChange(e) {
-                                    _this11.setState({
+                                    _this12.setState({
                                         text: e.target.value,
                                         textError: ''
                                     });
@@ -962,8 +979,9 @@ var Feedback = function (_React$Component) {
                             'div',
                             {
                                 className: 'tool ' + (this.state.toolBarType == 'hightlight' ? 'tool-active' : '') + ' hight-light',
+                                'data-label': props.hightlightTip || '突显问题',
                                 onClick: function onClick() {
-                                    _this11.setState({
+                                    _this12.setState({
                                         toolBarType: 'hightlight'
                                     });
                                 }
@@ -1003,8 +1021,9 @@ var Feedback = function (_React$Component) {
                         _react2.default.createElement(
                             'div',
                             { className: 'tool ' + (this.state.toolBarType == 'black' ? 'tool-active' : '') + ' hide',
+                                'data-label': props.hideTip || '隐藏敏感信息',
                                 onClick: function onClick() {
-                                    _this11.setState({
+                                    _this12.setState({
                                         toolBarType: 'black'
                                     });
                                 }
@@ -1055,7 +1074,7 @@ var Feedback = function (_React$Component) {
                                 'span',
                                 { className: 'flatbutton', draggable: 'false',
                                     onClick: this.editCancel.bind(this) },
-                                '\u5B8C\u6210'
+                                props.editDoneLabel || '完成'
                             )
                         )
                     ),
@@ -1073,7 +1092,7 @@ var Feedback = function (_React$Component) {
                                     } },
                                 _react2.default.createElement(
                                     'span',
-                                    { className: 'close', onClick: _this11.clearHightlight.bind(_this11, k) },
+                                    { className: 'close', onClick: _this12.clearHightlight.bind(_this12, k) },
                                     _react2.default.createElement(
                                         'svg',
                                         { viewBox: '0 0 1024 1024',
@@ -1099,7 +1118,7 @@ var Feedback = function (_React$Component) {
                                     } },
                                 _react2.default.createElement(
                                     'span',
-                                    { className: 'close', onClick: _this11.clearBlack.bind(_this11, k) },
+                                    { className: 'close', onClick: _this12.clearBlack.bind(_this12, k) },
                                     _react2.default.createElement(
                                         'svg',
                                         { viewBox: '0 0 1024 1024',
@@ -1157,7 +1176,7 @@ var Feedback = function (_React$Component) {
                                 state.textError
                             ) : null,
                             _react2.default.createElement('textarea', { placeholder: props.placeholder || '请说明您的问题或分享您的想法', ref: 'textarea', defaultValue: state.text, onChange: function onChange(e) {
-                                    _this11.setState({
+                                    _this12.setState({
                                         text: e.target.value,
                                         textError: ''
                                     });
@@ -1218,8 +1237,10 @@ var Feedback = function (_React$Component) {
                     ),
                     _react2.default.createElement('div', { className: 'legal', dangerouslySetInnerHTML: { __html: this.props.license || '\u5982\u51FA\u4E8E\u6CD5\u5F8B\u539F\u56E0\u9700\u8981\u8BF7\u6C42\u66F4\u6539\u5185\u5BB9\uFF0C\u8BF7\u524D\u5F80<a href="" style="color: ' + (props.theme || '#3986FF') + '">\u6CD5\u5F8B\u5E2E\u52A9</a>\u9875\u9762\u3002\u7CFB\u7EDF\u53EF\u80FD\u5DF2\u5C06\u90E8\u5206<a href="" style="color: ' + (props.theme || '#3986FF') + '">\u5E10\u53F7\u548C\u7CFB\u7EDF\u4FE1\u606F</a>\u53D1\u9001\u7ED9\n                                        Google\u3002\u6211\u4EEC\u5C06\u6839\u636E\u81EA\u5DF1\u7684<a href="" style="color: ' + (props.theme || '#3986FF') + '">\u9690\u79C1\u6743\u653F\u7B56</a>\u548C<a href="" style="color: ' + (props.theme || '#3986FF') + '">\u670D\u52A1\u6761\u6B3E</a>\u4F7F\u7528\u60A8\u63D0\u4F9B\u7684\u4FE1\u606F\u5E2E\u52A9\u89E3\u51B3\u6280\u672F\u95EE\u9898\u548C\u6539\u8FDB\u6211\u4EEC\u7684\u670D\u52A1\u3002' } })
                 ),
-                _react2.default.createElement('canvas', { ref: 'canvas', id: 'feedbackCanvas',
+                _react2.default.createElement('canvas', { ref: 'canvas', id: 'feedbackCanvas', 'data-html2canvas-ignore': 'true',
                     onMouseDown: this.canvasMouseDown.bind(this)
+                }),
+                _react2.default.createElement('canvas', { ref: 'shadowCanvas', id: 'shadowCanvas'
                 }),
                 state.snackbar ? _react2.default.createElement(
                     'div',
@@ -1249,5 +1270,8 @@ Feedback.propTypes = {
     loadingTip: _propTypes2.default.string,
     checkboxLabel: _propTypes2.default.string,
     cancelLabel: _propTypes2.default.string,
-    confirmLabel: _propTypes2.default.string
+    confirmLabel: _propTypes2.default.string,
+    hightlightTip: _propTypes2.default.string,
+    hideTip: _propTypes2.default.string,
+    editDoneLabel: _propTypes2.default.string
 };

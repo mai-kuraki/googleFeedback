@@ -1,5 +1,5 @@
 # googleFeedback
-![](https://user-gold-cdn.xitu.io/2018/5/17/1636cec3652b9860?w=420&h=270&f=gif&s=3401375)
+![](https://user-gold-cdn.xitu.io/2018/5/22/16386e2e8dca1808?w=419&h=259&f=gif&s=1950244)
 ![](https://user-gold-cdn.xitu.io/2018/5/17/1636cec56d528280?w=255&h=420&f=gif&s=1070950)
 [demo演示](http://39.105.103.128/feedback/demo)
 
@@ -65,6 +65,9 @@ class Page extends React.Component {
                             checkboxLabel="包含截图"
                             cancelLabel="取消"
                             confirmLabel="发送"
+                            hightlightTip= "突显问题"
+                            hideTip= "隐藏敏感信息"
+                            editDoneLabel= "完成"
                         />:null
                 }
             </div>
@@ -94,6 +97,9 @@ ReactDOM.render(<Page/>, document.getElementById('main'));
         checkboxLabel: '包含截图',
         cancelLabel: '取消',
         confirmLabel: '发送',
+        hightlightTip: '突显问题',
+        hideTip: '隐藏敏感信息',
+        editDoneLabel: '完成',
         license: `如出于法律原因需要请求更改内容，请前往
                 <a href="" >法律帮助</a>
                 页面。系统可能已将部分
@@ -124,6 +130,9 @@ react 组件：
 |checkboxLabel|勾选框文字|string|✗|
 |cancelLabel|取消按钮文字|string|✗|
 |confirmLabel|确认按钮文字|string|✗|
+|hightlightTip|高亮按钮文字提示|string|✗|
+|hideTip|隐藏按钮文字提示|string|✗|
+|editDoneLabel|确认按钮文字|string|✗|
 页面中直接引用option参数：
 | 参数 | 功能 | 类型 | 是否必填 |
 |-|-|-|-|

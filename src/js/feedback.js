@@ -159,6 +159,7 @@ export default class Feedback extends React.Component {
     constructor() {
         super();
         this.state = {
+            docWidth: document.body.clientWidth,
             docHeight: document.body.clientHeight,
             winHeight: window.innerHeight,
             device: 'pc',
@@ -261,9 +262,9 @@ export default class Feedback extends React.Component {
 
     switchCanvasVisible(visible) {
         if (visible) {
-            this.refs.canvas.removeAttribute('data-html2canvas-ignore');
+            this.refs.shadowCanvas.removeAttribute('data-html2canvas-ignore');
         } else {
-            this.refs.canvas.setAttribute('data-html2canvas-ignore', 'true');
+            this.refs.shadowCanvas.setAttribute('data-html2canvas-ignore', 'true');
         }
     }
 
@@ -295,10 +296,10 @@ export default class Feedback extends React.Component {
         } else {
             if (this.hasHelper) {
                 this.hasHelper = false;
+                this.initCanvas();
+                this.drawHightlightBorder();
+                this.drawHightlightArea()
             }
-            this.initCanvas();
-            this.drawHightlightBorder();
-            this.drawHightlightArea()
         }
     }
 
@@ -337,6 +338,7 @@ export default class Feedback extends React.Component {
             this.drawHightlightBorder();
             this.drawHightlightArea();
             this.ctx.clearRect(info.sx, info.sy, info.width, info.height);
+            this.sctx.clearRect(info.sx, info.sy, info.width, info.height);
         } else if (toolBarType == 'black') {
             this.drawHightlightBorder();
             this.drawHightlightArea();
@@ -364,6 +366,7 @@ export default class Feedback extends React.Component {
                 this.ctx.stroke();
                 this.drawHightlightArea();
                 this.ctx.clearRect(clientX, clientY, width, height);
+                this.sctx.clearRect(clientX, clientY, width, height);
             } else if (toolBarType == 'black') {
                 this.drawHightlightArea();
                 this.ctx.fillStyle = 'rgba(0,0,0,.4)';
@@ -392,7 +395,6 @@ export default class Feedback extends React.Component {
 
     componentDidMount() {
         this.calcHeight();
-        this.initCanvas();
         this.addEventListener();
         if (this.state.shotOpen) {
             this.shotScreen();
@@ -400,14 +402,19 @@ export default class Feedback extends React.Component {
     }
 
     calcHeight() {
-        let docHeight = document.body.clientHeight;
+        let docWidth = document.body.clientWidth,
+            docHeight = document.body.clientHeight;
         let windowHeight = window.innerHeight;
         if(docHeight < windowHeight) {
             docHeight = windowHeight;
         }
         this.setState({
+            docWidth: docWidth,
             docHeight: docHeight,
             winHeight: windowHeight,
+        });
+        setTimeout(() => {
+            this.initCanvas(true);
         });
     }
 
@@ -433,22 +440,29 @@ export default class Feedback extends React.Component {
         }
     }
 
-    initCanvas() {
+    initCanvas(init) {
         let canvas = this.refs.canvas;
+        let shadowCanvas = this.refs.shadowCanvas;
+        let docWidth = this.state.docWidth,
+            docHeight = this.state.docHeight;
         if (!this.ctx) {
             this.ctx = canvas.getContext('2d');
         }
-        let docWidth = document.body.clientWidth,
-            docHeight = document.body.clientHeight;
-        if(docHeight < window.innerHeight) {
-            docHeight = window.innerHeight;
+        if(!this.sctx) {
+            this.sctx = shadowCanvas.getContext('2d');
+        }
+        if(init) {
+            canvas.style.width = docWidth;
+            canvas.style.height = docHeight;
+            shadowCanvas.style.width = docWidth;
+            shadowCanvas.style.height = docHeight;
         }
         canvas.width = docWidth;
         canvas.height = docHeight;
-        canvas.style.width = docWidth;
-        canvas.style.height = docHeight;
-        this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        this.ctx.fillRect(0, 0, docWidth, docHeight);
+        shadowCanvas.width = docWidth;
+        shadowCanvas.height = docHeight;
+        this.sctx.fillStyle = 'rgba(0,0,0,0.38)';
+        this.sctx.fillRect(0, 0, docWidth, docHeight);
     }
 
     drawHightlightBorder() {
@@ -464,6 +478,7 @@ export default class Feedback extends React.Component {
     drawHightlightArea() {
         let hightlightItem = this.state.hightlightItem;
         hightlightItem.map((data, k) => {
+            this.sctx.clearRect(data.sx, data.sy, data.width, data.height);
             this.ctx.clearRect(data.sx, data.sy, data.width, data.height);
         });
     }
@@ -834,6 +849,7 @@ export default class Feedback extends React.Component {
                                         </div>
                                         <div
                                             className={`tool ${(this.state.toolBarType == 'hightlight') ? 'tool-active' : ''} hight-light`}
+                                            data-label={props.hightlightTip || '突显问题'}
                                             onClick={() => {
                                                 this.setState({
                                                     toolBarType: 'hightlight',
@@ -866,6 +882,7 @@ export default class Feedback extends React.Component {
                                     </svg></span>
                                         </div>
                                         <div className={`tool ${(this.state.toolBarType == 'black') ? 'tool-active' : ''} hide`}
+                                             data-label={props.hideTip || '隐藏敏感信息'}
                                              onClick={() => {
                                                  this.setState({
                                                      toolBarType: 'black',
@@ -904,7 +921,7 @@ export default class Feedback extends React.Component {
                                 }
                                 </span></div>
                                         <div className="button"><span className="flatbutton" draggable="false"
-                                                                      onClick={this.editCancel.bind(this)}>完成</span>
+                                                                      onClick={this.editCancel.bind(this)}>{props.editDoneLabel || '完成'}</span>
                                         </div>
                                     </div>
                             }
@@ -1023,8 +1040,10 @@ export default class Feedback extends React.Component {
                             </div>
                         </div>
                 }
-                <canvas ref="canvas" id="feedbackCanvas"
+                <canvas ref="canvas" id="feedbackCanvas" data-html2canvas-ignore="true"
                         onMouseDown={this.canvasMouseDown.bind(this)}
+                ></canvas>
+                <canvas ref="shadowCanvas" id="shadowCanvas"
                 ></canvas>
                 {
                     state.snackbar?<div className="snackbar">{state.snackbarMsg}</div>:null
@@ -1047,5 +1066,8 @@ Feedback.propTypes = {
     loadingTip: PropTypes.string,
     checkboxLabel: PropTypes.string,
     cancelLabel: PropTypes.string,
-    confirmLabel: PropTypes.string
+    confirmLabel: PropTypes.string,
+    hightlightTip: PropTypes.string,
+    hideTip: PropTypes.string,
+    editDoneLabel: PropTypes.string
 };

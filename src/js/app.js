@@ -19,6 +19,9 @@ class Feedback {
         this.checkboxLabel = option.checkboxLabel || '';
         this.cancelLabel = option.cancelLabel || '';
         this.confirmLabel = option.confirmLabel || '';
+        this.hightlightTip = option.hightlightTip || '';
+        this.hideTip = option.hideTip || '';
+        this.editDoneLabel = option.editDoneLabel || '';
         if(!this.container) {
             console.error('missing container element');
             return;
@@ -37,6 +40,9 @@ class Feedback {
             checkboxLabel={this.checkboxLabel}
             cancelLabel={this.cancelLabel}
             confirmLabel={this.confirmLabel}
+            hightlightTip= {this.hightlightTip}
+            hideTip= {this.hideTip}
+            editDoneLabel= {this.editDoneLabel}
         />, this.container);
     }
 }
@@ -86,6 +92,9 @@ class Page extends React.Component {
                             checkboxLabel={this.props.checkboxLabel}
                             cancelLabel={this.props.cancelLabel}
                             confirmLabel={this.props.confirmLabel}
+                            hightlightTip= {this.props.hightlightTip}
+                            hideTip= {this.props.hideTip}
+                            editDoneLabel= {this.props.editDoneLabel}
                         />:null
                 }
             </React.Fragment>
